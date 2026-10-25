@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "product": "Frame Builder",
+  "appId": "com.techsavage3d.canvasframe",
+  "version": "3.51.14",
+  "tag": "v3.51.14",
+  "releaseSourceCommit": "c869c68636ddbb9064fb2df8c42480972ba4ca87",
+  "repository": "https://github.com/TechSavage1989/Frame-Builder",
+  "visibility": "public",
+  "feed": "https://api.github.com/repos/TechSavage1989/Frame-Builder/releases/latest",
+  "previousVersion": "3.51.13",
+  "sourceCiRun": 40186586089,
+  "releaseRun": 40187778202,
+  "bootstrapPreviewRun": 40186545618,
+  "sourceTestCount": 22,
+  "nativeChecks": [
+    {
+      "name": "visible responsive isolated window",
+      "passed": true
+    },
+    {
+      "name": "native IPC banner reports failed check and Retry-After cooldown",
+      "passed": true
+    },
+    {
+      "name": "original native 3D preview",
+      "triangles": 43184,
+      "passed": true
+    },
+    {
+      "name": "solid native 3D preview",
+      "triangles": 48762,
+      "passed": true
+    },
+    {
+      "name": "light native 3D preview",
+      "triangles": 50768,
+      "passed": true
+    },
+    {
+      "name": "borderless native 3D preview",
+      "triangles": 72358,
+      "passed": true
+    },
+    {
+      "name": "spring option and active-operation guard",
+      "passed": true
+    },
+    {
+      "name": "detached viewer and return",
+      "passed": true
+    },
+    {
+      "name": ".stl export through native download handler",
+      "bytes": 1123184,
+      "passed": true
+    },
+    {
+      "name": ".step export through native download handler",
+      "bytes": 438222,
+      "passed": true
+    },
+    {
+      "name": ".3mf export through native download handler",
+      "bytes": 141749,
+      "passed": true
+    },
+    {
+      "name": "production two-minute focus and five-minute unfocused native timer",
+      "elapsedMilliseconds": [
+        0,
+        120706,
+        300005
+      ],
+      "passed": true
+    }
+  ],
+  "cadBaseline": {
+    "version": "3.51.6",
+    "importCommit": "4457d8110ef2d868f423c58823208679dddf190b",
+    "byteIdenticalPaths": [
+      "browser",
+      "cad_source"
+    ]
+  },
+  "historicalNativeNegativeControl": {
+    "run": 40184288439,
+    "sourceCommit": "cf38943f7a1502eca3d9bbb4f8f2aa70b0dbf915",
+    "fixture": "3.51.10",
+    "variants": [
+      {
+        "detached": true,
+        "output": "ignored",
+        "ready": false
+      },
+      {
+        "detached": true,
+        "output": "file",
+        "ready": false
+      },
+      {
+        "detached": false,
+        "output": "file",
+        "ready": true
+      }
+    ]
+  },
+  "limitations": [
+    "Unsigned; digest verification is not publisher-signature verification",
+    "User PC not tested",
+    "No new physical print/fit/load tests",
+    "Offline/429/Retry-After injected at request layer; no OS-wide disconnect or live shared-IP throttling forced",
+    "macOS/Linux, removable/exFAT and network-share packaging/installations not tested",
+    "Hard power loss and forced helper termination not tested"
+  ],
+  "status": "PASSED",
+  "independentHelperLifecycle": {
+    "run": 40186547952,
+    "fixture": "3.51.12",
+    "sameVersionDiagnostic": true,
+    "oldParentExited": true,
+    "helperSurvived": true,
+    "newVisibleRendererConfirmed": true,
+    "stageCleaned": true
+  },
+  "attachedHelperNegativeControl": {
+    "run": 40184559145,
+    "originalExecutablePreserved": true,
+    "helperDidNotSurviveGui": true
+  },
+  "assets": [
+    {
+      "name": "Frame_Builder_3.51.14_Windows_x64.exe",
+      "bytes": 100234238,
+      "sha256": "aef5685e099d37d395e1aae6d9e8b3ce1b95054fae7999da95616c2e98007341",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.14/Frame_Builder_3.51.14_Windows_x64.exe"
+    },
+    {
+      "name": "Frame_Builder_3.51.14_Windows_x64.zip",
+      "bytes": 100243373,
+      "sha256": "90795a508427b8b898223ec8d0d81ed3208a5335bd6422435db8df07d660fa11",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.14/Frame_Builder_3.51.14_Windows_x64.zip"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 298,
+      "sha256": "9c2422ffa52007b0d48e86220b35d8085ec6fdd3bd4ddf52a1dc1e8458d4958b",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.14/SHA256SUMS.txt"
+    },
+    {
+      "name": "update-manifest.json",
+      "bytes": 735,
+      "sha256": "3fdb57910a75052fbe51f9a2e192eab6b431d4b4df3b039960123bc83abbaa07",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.14/update-manifest.json"
+    }
+  ],
+  "directInstallerRun": 40186586894,
+  "directInstallerChecks": [
+    {
+      "name": "Windows PowerShell encoding negative control and UTF-8 correction",
+      "passed": true
+    },
+    {
+      "name": "actual native file lock delays replacement until released",
+      "passed": true
+    },
+    {
+      "name": "download, digest, target-volume staging, visible relaunch and deferred cleanup",
+      "passed": true
+    },
+    {
+      "name": "accented custom executable filename survives installation",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "interrupted new window restores and restarts exact previous executable",
+      "passed": true
+    },
+    {
+      "name": "cross-volume download to target staging",
+      "crossVolume": true,
+      "passed": true
+    }
+  ],
+  "verifiedAt": "2026-10-25T11:16:00.343Z",
+  "uiChecks": [
+    {
+      "name": "previous portable app discovers actual stable release from configured feed",
+      "passed": true
+    },
+    {
+      "name": "actual install control refuses to restart during active export",
+      "passed": true
+    },
+    {
+      "name": "real previous-to-new UI installation preserves settings, window size, custom filename and shortcut target",
+      "passed": true
+    }
+  ],
+  "uiDownloadForcedFresh": true,
+  "helperLogsAndMarkersCleanupChecked": true,
+  "maintainedVerifierCommit": "5991066ac4fe7e6dc77dcde6275d014905501d04",
+  "maintainedVerifierCiRun": 40187776808
+}
