@@ -76,6 +76,10 @@ async function run(win){
   await exportFile("document.getElementById('downloadSTEPPart').click()",'.step');
   await exportFile("document.getElementById('exportFormat').value='3mf';document.getElementById('exportFormat').dispatchEvent(new Event('change'));document.getElementById('frameJointTest').click()",'.3mf');
   await waitFor(()=>evaluate("document.getElementById('exportStatus').textContent.startsWith('Saved:')"),'native save status');
+  if(process.argv.includes('--reuse-validated-timers')&&/^[a-f0-9]{40}$/.test(process.env.FRAME_TIMERS_VALIDATED_COMMIT||'')){
+    checks.push({name:'unchanged production timer validation reused',sourceCommit:process.env.FRAME_TIMERS_VALIDATED_COMMIT,passed:true});
+    assert.equal(errors.length,0,JSON.stringify(errors));finish();return;
+  }
   // This uses the actual five-minute and two-minute production values, actual
   // Electron windows, and wall-clock delays. It does not replace the clock.
   const events=[],start=Date.now();

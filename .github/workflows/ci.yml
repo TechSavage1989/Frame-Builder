@@ -22,13 +22,17 @@ jobs:
     needs: source-checks
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
       - run: npm ci
       - name: Native model, exports and production timer integration
-        run: npx electron scripts/native-integration.cjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/run-native-ci.cjs
       - run: npm run build:windows
       - name: Native packaged-window smoke test
         shell: pwsh

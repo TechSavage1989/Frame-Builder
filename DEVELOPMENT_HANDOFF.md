@@ -1,6 +1,13 @@
 # Frame Builder development handoff
 
-## Final 3.51.9 verification in progress (2026-10-25)
+## Corrected 3.51.9 installer verification in progress (2026-10-25)
+- 3.51.8 release workflow failed safely before replacement: inherited PowerShell 7 module paths hid Windows PowerShell Get-FileHash. It remains a prerelease. 3.51.9 publication run 40178577749 was cancelled before publication, so its version remains unused.
+- Native negative-control diagnosis run 40178833753 reproduced the missing hashing command. Corrected native probe run 40178981099 passed with .NET SHA-256, Windows native module discovery, UTF-8 job decoding and an accented filename. Its deliberate preflight cancellation left the target unchanged.
+- 3.51.9 must still pass full hosted download/install/rollback and actual UI update checks before stable delivery.
+- For previous 3.51.8 GUI testing, the driver launches with Explorer-equivalent native Windows module precedence. The new helper itself normalizes its inherited module path and uses .NET hashing, so it also supports launch from PowerShell 7.
+- Native frame/export tests still run on each source CI. Production five/two-minute timing tests can be reused only when the immediate parent CI passed and all app code except the installer, CAD/browser source, assets and package metadata are unchanged. Otherwise the complete real timer suite runs.
+
+## Earlier 3.51.9 verification plan (2026-10-25)
 - 3.51.7 prerelease publication succeeded in run 40177181420. 3.51.8 exact-source Windows CI succeeded in run 40177726822 on commit 8c473e7d4df93bb8f211af2c3182c3bf3f519d98. Its hosted update workflow 40177727938 is still in progress.
 - Final candidate 3.51.9 makes PowerShell 5.1 job-file decoding explicitly UTF-8 and tests an accented custom executable filename. It also gives the generated desktop HTML the actual package version in its title. Source browser/CAD geometry remains 3.51.6.
 - 3.51.9 must verify an actual hosted update from 3.51.8 before becoming the delivered stable build. Do not overwrite any existing published version.

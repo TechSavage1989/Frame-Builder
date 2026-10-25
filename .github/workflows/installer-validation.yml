@@ -1,0 +1,40 @@
+name: Installer Validation
+on:
+  workflow_dispatch:
+  push:
+    branches: ['validation/installer']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse actual Windows PowerShell installer
+        shell: powershell
+        run: |
+          $tokens=$null
+          $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path (Get-Location) 'app/update-install.ps1'),[ref]$tokens,[ref]$errors)|Out-Null
+          if($errors.Count){$errors|ForEach-Object {Write-Host $_};throw 'Installer parse failed'}
+      - name: Download immutable prior portable fixture
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force validation/fixture|Out-Null
+          gh release download v3.51.7 --repo '${{ github.repository }}' --pattern 'Frame_Builder_3.51.7_Windows_x64.exe' --dir validation/fixture
+          "INSTALLER_PROBE_EXE=validation/fixture/Frame_Builder_3.51.7_Windows_x64.exe"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Exercise actual helper preflight with captured output
+        run: node scripts/installer-preflight.cjs
+      - name: Preserve diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Installer-Diagnosis
+          path: validation/runtime/*.json
+          retention-days: 30

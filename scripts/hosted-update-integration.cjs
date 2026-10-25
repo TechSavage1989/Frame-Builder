@@ -47,8 +47,9 @@ function runningFrame(){
 async function launch(version,debugPort){
   fs.rmSync(path.join(storage,'check-cache.json'),{force:true});
   const h=receiptRequest();
+  const nativeModules=path.join(process.env.SystemRoot,'System32','WindowsPowerShell','v1.0','Modules');
   const p=spawn(target,debugPort?['--remote-debugging-port='+debugPort,'--remote-debugging-address=127.0.0.1']:[],
-    {stdio:'ignore',env:{...process.env,FRAME_BUILDER_HEALTH_FILE:h.file,FRAME_BUILDER_HEALTH_TOKEN:h.token}});
+    {stdio:'ignore',env:{...process.env,PSModulePath:nativeModules+';'+(process.env.PSModulePath||''),FRAME_BUILDER_HEALTH_FILE:h.file,FRAME_BUILDER_HEALTH_TOKEN:h.token}});
   const r=await waitFor(()=>receipt(h.file,h.token,version),'visible '+version+' window');
   fs.rmSync(h.file,{force:true});
   return {p,receipt:r};
@@ -82,10 +83,15 @@ async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false
       {stdio:'ignore',windowsHide:true,env:{...process.env,FRAME_LOCK_TARGET:target,FRAME_LOCK_READY:lockReady,FRAME_RELEASE_LOCK:releaseLock}});
     await waitFor(()=>fs.existsSync(lockReady),'native executable lock',15000);
   }
-  const installer=spawn('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',helper,'-JobFile',jobFile],{stdio:'ignore',windowsHide:true});
+  const installer=spawn('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',helper,'-JobFile',jobFile],{stdio:['ignore','pipe','pipe'],windowsHide:true});
+  let helperStderr='',helperExit=null;installer.stderr.on('data',x=>helperStderr+=x);installer.stdout.resume();installer.on('exit',code=>helperExit=code);
   const ready=path.join(storage,'ready-'+id+'.json');
   const resultFile=path.join(storage,'result-'+id+'.json');
-  await waitFor(()=>fs.existsSync(ready),'installer preflight');
+  await waitFor(()=>{
+    if(fs.existsSync(resultFile)){const r=JSON.parse(fs.readFileSync(resultFile,'utf8'));throw Error('Installer preflight failed: '+r.message+' '+helperStderr)}
+    if(helperExit!==null)throw Error('Installer exited before ready: '+helperExit+' '+helperStderr);
+    return fs.existsSync(ready)
+  },'installer preflight');
   await closePid(old.receipt.pid);
   if(holdLock){
     await delay(2500);assert.equal(await hashFile(target),job.oldSha256);
