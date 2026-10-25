@@ -160,8 +160,7 @@ async function uiTest(oldRelease,newRelease){
   checks.push({name:'actual install control refuses to restart during active export',passed:true});
   await ev("Array.from(document.querySelectorAll('#frame-update-banner button')).find(x=>x.textContent==='Install and restart').click()");
   // Invoke only the standard native button in this exact process.
-  const confirmCode="$ErrorActionPreference='Stop';Add-Type -AssemblyName UIAutomationClient;Add-Type -AssemblyName UIAutomationTypes;$a=[System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ProcessIdProperty,[int]$env:FRAME_TEST_PID);$b=[System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ClassNameProperty,'Button');$c=[System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::NameProperty,'Install and restart');$and=[System.Windows.Automation.AndCondition]::new([System.Windows.Automation.AndCondition]::new($a,$b),$c);for($i=0;$i -lt 150;$i++){$button=[System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Descendants,$and);if($button){$button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke();exit 0};Start-Sleep -Milliseconds 100};throw 'Native install confirmation button was not found'";
-  ps(confirmCode,{FRAME_TEST_PID:String(old.receipt.pid)});
+  execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.resolve('scripts/confirm-install-dialog.ps1'),'-ProcessIdValue',String(old.receipt.pid)],{encoding:'utf8',windowsHide:true,timeout:30000});
   const jobFile=await waitFor(()=>fs.readdirSync(storage).find(n=>/^install-[a-f0-9]{24}\.json$/.test(n)),'actual app-created install job');
   const job=JSON.parse(fs.readFileSync(path.join(storage,jobFile),'utf8'));
   client.socket.close();

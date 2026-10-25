@@ -154,8 +154,33 @@ jobs:
           }finally{$archive.Dispose()}
           $prior=(Get-Content release-validation.json | ConvertFrom-Json).previousVersion
           "PREVIOUS_VERSION=$prior" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Reuse passed native installer checks for identical published application
+        if: env.EXISTING_RELEASE == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $config=Get-Content release-validation.json -Raw|ConvertFrom-Json
+          if($config.verifiedInstallerRun){
+            $id=[long]$config.verifiedInstallerRun
+            $run=gh api "repos/${{ github.repository }}/actions/runs/$id"|ConvertFrom-Json
+            if($LASTEXITCODE -ne 0 -or $run.name -ne 'Windows Release'){throw 'Invalid native validation source'}
+            $jobs=gh api "repos/${{ github.repository }}/actions/runs/$id/jobs"|ConvertFrom-Json
+            $passed=@($jobs.jobs.steps|Where-Object {$_.name -eq 'Real hosted download, native replacement, lock wait and rollback' -and $_.conclusion -eq 'success'}).Count -gt 0
+            if(-not $passed){throw 'Referenced native installer validation did not pass'}
+            git fetch --depth=1 origin $run.head_sha
+            if($LASTEXITCODE -ne 0){throw 'Unable to inspect native validation source'}
+            git diff --exit-code $run.head_sha HEAD -- app assets browser cad_source package.json package-lock.json scripts/sync-builder.cjs Build_Windows.cmd
+            if($LASTEXITCODE -ne 0){throw 'Native installer validation application differs'}
+            $prior=git show ($run.head_sha+':release-validation.json')|ConvertFrom-Json
+            if($prior.previousVersion -ne $config.previousVersion){throw 'Native test previous version differs'}
+            $proof=@{run_id=$id;source_commit=$run.head_sha;release_commit=$env:RELEASE_SOURCE_COMMIT;passed=$true}
+            New-Item -ItemType Directory -Force validation/runtime|Out-Null
+            $proof|ConvertTo-Json|Set-Content validation/runtime/reused-installer-validation.json
+            'REUSE_NATIVE_INSTALLER=true'|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          }
       - name: Real hosted download, native replacement, lock wait and rollback
-        if: env.PREVIOUS_VERSION != ''
+        if: env.PREVIOUS_VERSION != '' && env.REUSE_NATIVE_INSTALLER != 'true'
         run: node scripts/hosted-update-integration.cjs direct
       - name: Promote only after native update and rollback pass
         if: env.PREVIOUS_VERSION != ''
