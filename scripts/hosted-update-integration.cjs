@@ -160,7 +160,7 @@ async function uiTest(oldRelease,newRelease){
   checks.push({name:'actual install control refuses to restart during active export',passed:true});
   await ev("Array.from(document.querySelectorAll('#frame-update-banner button')).find(x=>x.textContent==='Install and restart').click()");
   // Invoke only the standard native button in this exact process.
-  execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.resolve('scripts/confirm-install-dialog.ps1'),'-ProcessIdValue',String(old.receipt.pid)],{encoding:'utf8',windowsHide:true,timeout:30000});
+  execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.resolve('scripts/confirm-install-dialog.ps1'),'-ProcessIdValue',String(old.receipt.pid)],{encoding:'utf8',windowsHide:true,timeout:45000,stdio:'inherit'});
   const jobFile=await waitFor(()=>fs.readdirSync(storage).find(n=>/^install-[a-f0-9]{24}\.json$/.test(n)),'actual app-created install job');
   const job=JSON.parse(fs.readFileSync(path.join(storage,jobFile),'utf8'));
   client.socket.close();
@@ -221,5 +221,7 @@ async function uiTest(oldRelease,newRelease){
   console.log(JSON.stringify(checks));
 })().catch(error=>{
   fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,mode,checks,passed:false,error:error.stack},null,2));
+  if(error.stdout)console.error(String(error.stdout));
+  if(error.stderr)console.error(String(error.stderr));
   console.error(error.stack);process.exit(1);
 });

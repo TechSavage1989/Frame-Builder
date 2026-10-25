@@ -1,61 +1,79 @@
 param([Parameter(Mandatory=$true)][int]$ProcessIdValue)
 $ErrorActionPreference='Stop'
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
 Add-Type -TypeDefinition @'
 using System;
+using System.Text;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
-public static class FrameInstallWindows {
+public static class FrameNativeConfirm {
   public delegate bool EnumProc(IntPtr h, IntPtr p);
-  [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc f, IntPtr p);
-  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint p);
-  [DllImport("user32.dll")] public static extern IntPtr GetWindow(IntPtr h, uint c);
-  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+  [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc f, IntPtr p);
+  [DllImport("user32.dll")] static extern bool EnumChildWindows(IntPtr h, EnumProc f, IntPtr p);
+  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint p);
+  [DllImport("user32.dll")] static extern IntPtr GetWindow(IntPtr h, uint c);
+  [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
+  [DllImport("user32.dll")] static extern bool IsWindowEnabled(IntPtr h);
+  [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr h,StringBuilder s,int n);
+  [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr h,StringBuilder s,int n);
+  [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);
+  static uint Pid(IntPtr h){uint p;GetWindowThreadProcessId(h,out p);return p;}
+  static string Text(IntPtr h){var s=new StringBuilder(2048);GetWindowText(h,s,2048);return s.ToString();}
+  static string Class(IntPtr h){var s=new StringBuilder(256);GetClassName(h,s,256);return s.ToString();}
+  static bool Ours(IntPtr h,int pid){return IsWindowVisible(h)&&(Pid(h)==pid||Pid(GetWindow(h,4))==pid);}
+  public static bool Click(int pid){
+    bool clicked=false;
+    EnumWindows((h,p)=>{
+      if(Ours(h,pid)) EnumChildWindows(h,(b,q)=>{
+        string name=Text(b).Replace("&","").Trim();
+        if(Class(b)=="Button"&&IsWindowEnabled(b)&&name.IndexOf("Install",StringComparison.OrdinalIgnoreCase)>=0&&name.IndexOf("restart",StringComparison.OrdinalIgnoreCase)>=0){
+          clicked=PostMessage(b,0x00F5,IntPtr.Zero,IntPtr.Zero);return false;
+        }
+        return true;
+      },IntPtr.Zero);
+      return !clicked;
+    },IntPtr.Zero);
+    return clicked;
+  }
+  public static IntPtr[] Modals(int pid){
+    var result=new List<IntPtr>();
+    EnumWindows((h,p)=>{if(Ours(h,pid)&&(GetWindow(h,4)!=IntPtr.Zero||Class(h)=="#32770"))result.Add(h);return true;},IntPtr.Zero);
+    return result.ToArray();
+  }
+  public static string Snapshot(int pid){
+    var result=new StringBuilder();
+    EnumWindows((h,p)=>{
+      if(Ours(h,pid)){
+        result.AppendLine("WINDOW "+h+" owner="+GetWindow(h,4)+" class="+Class(h)+" text="+Text(h));
+        EnumChildWindows(h,(b,q)=>{if(Class(b)=="Button"||Text(b).Length>0)result.AppendLine(" CHILD "+b+" class="+Class(b)+" text="+Text(b));return true;},IntPtr.Zero);
+      }return true;
+    },IntPtr.Zero);return result.ToString();
+  }
 }
 '@
-$buttonCondition=[System.Windows.Automation.PropertyCondition]::new(
-  [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-  [System.Windows.Automation.ControlType]::Button)
-$diagnostics=@()
-for($attempt=0;$attempt -lt 100;$attempt++){
-  $handles=New-Object 'System.Collections.Generic.List[System.IntPtr]'
-  $callback=[FrameInstallWindows+EnumProc]{
-    param([IntPtr]$handle,[IntPtr]$unused)
-    [uint32]$windowPid=0
-    [void][FrameInstallWindows]::GetWindowThreadProcessId($handle,[ref]$windowPid)
-    $owner=[FrameInstallWindows]::GetWindow($handle,4)
-    [uint32]$ownerPid=0
-    if($owner -ne [IntPtr]::Zero){[void][FrameInstallWindows]::GetWindowThreadProcessId($owner,[ref]$ownerPid)}
-    if(($windowPid -eq $ProcessIdValue -or $ownerPid -eq $ProcessIdValue) -and [FrameInstallWindows]::IsWindowVisible($handle)){
-      $handles.Add($handle)
-    }
-    return $true
-  }
-  [void][FrameInstallWindows]::EnumWindows($callback,[IntPtr]::Zero)
-  $diagnostics=@()
-  foreach($handle in $handles){
-    try {
-      $window=[System.Windows.Automation.AutomationElement]::FromHandle($handle)
-      $owner=[FrameInstallWindows]::GetWindow($handle,4)
-      $modal=$window.GetCurrentPropertyValue([System.Windows.Automation.WindowPattern]::IsModalProperty)
-      $buttons=$window.FindAll([System.Windows.Automation.TreeScope]::Descendants,$buttonCondition)
-      $names=@()
-      foreach($button in $buttons){
-        $name=([string]$button.Current.Name).Replace('&','').Trim()
-        $names+=$name
-        # Restrict invocation to the owned/modal native window, excluding the
-        # web page's identically named Install button behind the modal.
-        $nativeWindow=$owner -ne [IntPtr]::Zero -or $modal -eq $true -or $window.Current.ClassName -eq '#32770'
-        if($nativeWindow -and $button.Current.IsEnabled -and $name -like '*Install*restart*'){
-          $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-          Write-Host 'Native install confirmation invoked'
-          exit 0
+for($attempt=0;$attempt -lt 80;$attempt++){
+  if([FrameNativeConfirm]::Click($ProcessIdValue)){Write-Host 'Native confirmation queued through its own button';exit 0}
+  if($attempt -eq 0){Write-Host ([FrameNativeConfirm]::Snapshot($ProcessIdValue))}
+  # Avoid traversing Chromium's complete accessibility tree.
+  $modals=[FrameNativeConfirm]::Modals($ProcessIdValue)
+  if($modals.Count){
+    Add-Type -AssemblyName UIAutomationClient
+    Add-Type -AssemblyName UIAutomationTypes
+    $condition=[System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty,[System.Windows.Automation.ControlType]::Button)
+    foreach($h in $modals){
+      try {
+        $w=[System.Windows.Automation.AutomationElement]::FromHandle($h)
+        foreach($b in $w.FindAll([System.Windows.Automation.TreeScope]::Descendants,$condition)){
+          $name=([string]$b.Current.Name).Replace('&','').Trim()
+          if($b.Current.IsEnabled -and $name -like '*Install*restart*'){
+            $b.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+            Write-Host 'Native modal confirmation invoked'
+            exit 0
+          }
         }
-      }
-      $diagnostics+=@{window=$window.Current.Name;class=$window.Current.ClassName;owner=[string]$owner;modal=$modal;buttons=$names}
-    } catch { }
+      } catch { }
+    }
   }
   Start-Sleep -Milliseconds 200
 }
-Write-Host ($diagnostics|ConvertTo-Json -Depth 5)
-throw 'Native installation confirmation was not found in the app-owned modal'
+Write-Host ([FrameNativeConfirm]::Snapshot($ProcessIdValue))
+throw 'Native confirmation was not found in app-owned windows'
