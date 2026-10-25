@@ -103,7 +103,7 @@ test('desktop exports use the native chooser and report completion or cancellati
     return item;
   }
   const item = download('Frame_Joint_Test.3mf', '/chosen/Frame_Joint_Test.3mf');
-  assert.equal(item.options.defaultPath, '/test/Downloads/Frame_Joint_Test.3mf');
+  assert.equal(item.options.defaultPath, path.join('/test/Downloads', 'Frame_Joint_Test.3mf'));
   assert.equal(item.options.filters[0].extensions[0], '3mf');
   item.emit('done', {}, 'completed');
   assert.equal(window.sent.at(-1).value.state, 'completed');
