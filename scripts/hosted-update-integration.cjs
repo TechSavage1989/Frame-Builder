@@ -71,7 +71,8 @@ async function release(version){
   return {info,file};
 }
 async function waitCleanup(job){
-  await waitFor(()=>!fs.existsSync(job.stage)&&!fs.existsSync(path.join(storage,'helper-'+job.id+'.ps1')),'post-helper cleanup',40000);
+  const owned=['install-'+job.id+'.json','result-'+job.id+'.json','ready-'+job.id+'.json','health-'+job.id+'.txt','helper-'+job.id+'.ps1','helper-'+job.id+'.log','helper-'+job.id+'.out.log','abort-'+job.id];
+  await waitFor(()=>!fs.existsSync(job.stage)&&owned.every(n=>!fs.existsSync(path.join(storage,n))),'post-helper cleanup',40000);
 }
 async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false}={}){
   const old=await launch(oldVersion);
@@ -153,6 +154,9 @@ async function connect(port){
 }
 async function uiTest(oldRelease,newRelease){
   fs.copyFileSync(oldRelease.file,target);
+  // Force the real app's Download action through the network and streaming
+  // verifier. The direct installer fixture intentionally leaves a cache.
+  fs.rmSync(newRelease.file,{force:true});
   const port=19371;
   const old=await launch(previous,port);
   const client=await connect(port),ev=client.evaluate;
