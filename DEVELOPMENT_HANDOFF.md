@@ -101,3 +101,8 @@ The hosted manifest and checksum file, and the stable-named EXE inside the ZIP, 
 - Removable/exFAT and network-share installations were not tested. Cross-volume staging was validated between hosted Windows C: and D: drives.
 - License remains unspecified; package declaration is UNLICENSED. Do not choose a license without authorization.
 - Local Linux display/network restrictions are not target-platform validation. Use the hosted Windows workflow for portable verification.
+
+
+## README refresh (2026-10-25)
+
+Documentation-only update: reorganized the root README around the existing app icon, release downloads, numbered first-run steps, features, settings and update guidance. Claims were checked against current source, workflows and release metadata. Application source, versions, tags, release assets and repository access are unchanged. This documentation pass did not rerun physical printing or manual Windows PC tests; existing qualification limits above still apply.
