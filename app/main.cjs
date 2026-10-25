@@ -112,7 +112,29 @@ function configureDownloads() {
   });
 }
 
+// The portable launcher may forward startup arguments differently from the
+// unpacked EXE. Accept a health request by environment variable or CLI.
+// Only a genuinely visible application window can acknowledge success.
+let windowHealthWritten=false;
+function writeWindowHealth() {
+  if (windowHealthWritten || !mainWindow || mainWindow.isDestroyed()) return;
+  const ix=process.argv.indexOf('--frame-update-health-file');
+  const jx=process.argv.indexOf('--frame-update-health-token');
+  const rawFile=process.env.FRAME_BUILDER_HEALTH_FILE || (ix>=0?process.argv[ix+1]:null);
+  const token=process.env.FRAME_BUILDER_HEALTH_TOKEN || (jx>=0?process.argv[jx+1]:null);
+  if (!rawFile || !token || !mainWindow.isVisible()) return;
+  const file=path.resolve(rawFile),storage=path.resolve(app.getPath('userData'),'updates');
+  if (!file.startsWith(storage+path.sep) ||
+      !/^health-[a-f0-9]{24}\.txt$/.test(path.basename(file)) ||
+      !/^[a-f0-9]{48}$/.test(token)) return;
+  try {
+    fs.writeFileSync(file, JSON.stringify({token,version:app.getVersion(),
+      pid:process.pid,windowVisible:true}),{flag:'wx',mode:0o600});
+    windowHealthWritten=true;
+  } catch (_) { /* Install helper owns timeout and rollback. */ }
+}
 function createWindow() {
+  windowHealthWritten=false;
   mainWindow = new BrowserWindow({
     title: 'Frame Builder', width: 1440, height: 960, minWidth: 760, minHeight: 600,
     backgroundColor: '#eef2f4', show: false,
@@ -122,17 +144,7 @@ function createWindow() {
   attachNavigationRules(mainWindow.webContents);
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    const ix=process.argv.indexOf('--frame-update-health-file');const jx=process.argv.indexOf('--frame-update-health-token');
-    if(ix>=0&&jx>=0&&process.argv[ix+1]&&process.argv[jx+1]&&mainWindow.isVisible()){
-      const file=path.resolve(process.argv[ix+1]);const storage=path.resolve(app.getPath('userData'),'updates');
-      if (file.startsWith(storage + path.sep) &&
-          /^health-[a-f0-9]{24}\.txt$/.test(path.basename(file)) &&
-          /^[a-f0-9]{48}$/.test(process.argv[jx+1])) {
-        const receipt = { token: process.argv[jx+1], version: app.getVersion(),
-          pid: process.pid, windowVisible: mainWindow.isVisible() };
-        fs.writeFileSync(file, JSON.stringify(receipt), { flag: 'wx', mode: 0o600 });
-      }
-    }
+    writeWindowHealth();
   });
   mainWindow.on('focus', () => {
     const now = Date.now();
@@ -144,6 +156,10 @@ function createWindow() {
   });
   mainWindow.on('closed', () => { mainWindow = null; });
   mainWindow.webContents.on('did-finish-load', () => {
+    // Virtualized Windows sessions may not emit ready-to-show after a successful
+    // page load; show the actual window before checking its health receipt.
+    if (!mainWindow.isVisible()) mainWindow.show();
+    writeWindowHealth();
     if (updater?.last) reportUpdate(updater.last);
   });
   mainWindow.webContents.on('did-fail-load', (_event, code, description) => {
