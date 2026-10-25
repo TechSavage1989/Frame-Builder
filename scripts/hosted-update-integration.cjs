@@ -35,10 +35,10 @@ function receiptRequest(){
 function receipt(file,token,version){
   try{const r=JSON.parse(fs.readFileSync(file,'utf8'));return r.token===token&&r.version===version&&r.rendererReady&&r.windowVisible?r:null}catch{return null}
 }
-async function closePid(pid){
+async function closePid(pid,waitUnlock=true){
   ps("$p=Get-Process -Id ([int]$env:FRAME_TEST_PID) -ErrorAction SilentlyContinue;if($p){$p.CloseMainWindow()|Out-Null}",{FRAME_TEST_PID:String(pid)});
   await waitFor(()=>!isRunning(pid),'application close',30000);
-  await waitFor(()=>ps("try{$f=[IO.File]::Open($env:FRAME_TEST_TARGET,'Open','ReadWrite','None');$f.Dispose();'ready'}catch{'locked'}",{FRAME_TEST_TARGET:target})==='ready','portable launcher file unlock',30000);
+  if(waitUnlock)await waitFor(()=>ps("try{$f=[IO.File]::Open($env:FRAME_TEST_TARGET,'Open','ReadWrite','None');$f.Dispose();'ready'}catch{'locked'}",{FRAME_TEST_TARGET:target})==='ready','portable launcher file unlock',30000);
 }
 function runningFrame(){
   const json=ps("Get-Process -Name 'Frame Builder' -ErrorAction SilentlyContinue | Where-Object {$_.MainWindowHandle -ne 0} | Select-Object -First 1 -Property Id | ConvertTo-Json -Compress");
@@ -92,7 +92,7 @@ async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false
     if(helperExit!==null)throw Error('Installer exited before ready: '+helperExit+' '+helperStderr);
     return fs.existsSync(ready)
   },'installer preflight');
-  await closePid(old.receipt.pid);
+  await closePid(old.receipt.pid,false);
   if(holdLock){
     await delay(2500);assert.equal(await hashFile(target),job.oldSha256);
     fs.writeFileSync(releaseLock,'release');

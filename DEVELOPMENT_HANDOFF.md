@@ -1,6 +1,12 @@
 # Frame Builder development handoff
 
-## Corrected 3.51.9 installer verification in progress (2026-10-25)
+## Final verification checkpoint (2026-10-25)
+- Corrected application source 7049e6e436e6562938588729566b01bdc795012e includes UTF-8 installer paths, .NET hashing and native PowerShell module precedence. App title now shows desktop 3.51.9.
+- The file-lock test driver must close the old window without waiting for the test's deliberately held lock. The helper itself waits for unlock; the driver releases its lock after checking that no replacement occurred. This is a test sequencing fix, not a change to application behavior.
+- Release workflows can resume verification of existing assets only when all runtime, CAD, assets and package/build identity source matches the immutable release tag. Existing assets and tags are never replaced or rebuilt. This allows verification-script repairs without changing an already published binary.
+- Still require native hosted install/rollback and actual UI update success before stable delivery.
+
+## Earlier installer checkpoint (2026-10-25)
 - 3.51.8 release workflow failed safely before replacement: inherited PowerShell 7 module paths hid Windows PowerShell Get-FileHash. It remains a prerelease. 3.51.9 publication run 40178577749 was cancelled before publication, so its version remains unused.
 - Native negative-control diagnosis run 40178833753 reproduced the missing hashing command. Corrected native probe run 40178981099 passed with .NET SHA-256, Windows native module discovery, UTF-8 job decoding and an accented filename. Its deliberate preflight cancellation left the target unchanged.
 - 3.51.9 must still pass full hosted download/install/rollback and actual UI update checks before stable delivery.
