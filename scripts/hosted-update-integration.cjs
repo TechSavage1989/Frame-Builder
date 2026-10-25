@@ -38,6 +38,7 @@ function receipt(file,token,version){
 async function closePid(pid){
   ps("$p=Get-Process -Id ([int]$env:FRAME_TEST_PID) -ErrorAction SilentlyContinue;if($p){$p.CloseMainWindow()|Out-Null}",{FRAME_TEST_PID:String(pid)});
   await waitFor(()=>!isRunning(pid),'application close',30000);
+  await waitFor(()=>ps("try{$f=[IO.File]::Open($env:FRAME_TEST_TARGET,'Open','ReadWrite','None');$f.Dispose();'ready'}catch{'locked'}",{FRAME_TEST_TARGET:target})==='ready','portable launcher file unlock',30000);
 }
 function runningFrame(){
   const json=ps("Get-Process -Name 'Frame Builder' -ErrorAction SilentlyContinue | Where-Object {$_.MainWindowHandle -ne 0} | Select-Object -First 1 -Property Id | ConvertTo-Json -Compress");
@@ -97,7 +98,7 @@ async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false
   if(interrupt){
     ps("Stop-Process -Id ([int]$env:FRAME_TEST_PID) -Force",{FRAME_TEST_PID:String(healthy.pid)});
   }
-  const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(resultFile,'utf8'))}catch{return null}},'installer result',150000);
+  const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(resultFile,'utf8'))}catch{return !interrupt&&!fs.existsSync(jobFile)&&!fs.existsSync(job.stage)&&isRunning(healthy.pid)?{state:'success',cleanupObserved:true}:null}},'installer result',150000);
   await waitFor(()=>!isRunning(installer.pid),'helper exit',15000);
   if(interrupt){
     assert.equal(result.state,'rolled-back',JSON.stringify(result));
@@ -159,7 +160,7 @@ async function uiTest(oldRelease,newRelease){
   const job=JSON.parse(fs.readFileSync(path.join(storage,jobFile),'utf8'));
   client.socket.close();
   const h=await waitFor(()=>receipt(path.join(storage,'health-'+job.id+'.txt'),job.healthToken,current),'actual installed visible app');
-  const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(path.join(storage,'result-'+job.id+'.json'),'utf8'))}catch{return null}},'actual installed result');
+  const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(path.join(storage,'result-'+job.id+'.json'),'utf8'))}catch{return !fs.existsSync(path.join(storage,jobFile))&&!fs.existsSync(job.stage)&&isRunning(h.pid)?{state:'success',cleanupObserved:true}:null}},'actual installed result');
   assert.equal(result.state,'success',JSON.stringify(result));
   await waitCleanup(job);assert.equal(await hashFile(target),newRelease.info.asset.sha256);
   assert.equal(await hashFile(path.join(storage,'rollback.exe')),oldRelease.info.asset.sha256);
@@ -197,5 +198,5 @@ async function uiTest(oldRelease,newRelease){
   console.log(JSON.stringify(checks));
 })().catch(error=>{
   fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,mode,checks,passed:false,error:error.stack},null,2));
-  console.error(error.stack);process.exitCode=1;
+  console.error(error.stack);process.exit(1);
 });
