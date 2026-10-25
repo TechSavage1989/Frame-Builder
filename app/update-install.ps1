@@ -69,6 +69,8 @@ try {
   Move-Item -LiteralPath $stage -Destination $Target
   # Electron-builder portable launcher can exit after starting the extracted app.
   # A valid versioned, nonce-bound visible-window receipt is the success condition.
+  $env:FRAME_BUILDER_HEALTH_FILE = $HealthFile
+  $env:FRAME_BUILDER_HEALTH_TOKEN = $HealthToken
   $child = Start-Process -FilePath $Target -ArgumentList @(
     '--frame-update-health-file', ('"' + $HealthFile + '"'),
     '--frame-update-health-token', $HealthToken
