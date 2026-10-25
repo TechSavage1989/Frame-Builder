@@ -112,7 +112,9 @@ async function installUpdate() {
       try {
         child = spawn(path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
           ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', helper, '-JobFile', jobFile],
-          { detached: true, stdio: ['ignore', logFd, logFd], windowsHide: true });
+          // DETACHED_PROCESS makes Windows PowerShell exit before its script.
+          // A normal Windows child continues after this GUI process exits.
+          { detached: false, stdio: ['ignore', logFd, logFd], windowsHide: true });
       } finally { fs.closeSync(logFd); }
       child.unref();
       await waitForHelper(path.join(folder, 'ready-' + id + '.json'), id, child, path.join(folder, 'result-' + id + '.json'), helperLog);
@@ -228,6 +230,7 @@ function createWindow() {
   if (app.isPackaged) stopSchedule = bindUpdateSchedule({ window: mainWindow, checker: updater, online: () => net.isOnline() });
 }
 async function housekeeping() {
+  if (updatePhase === 'installing' || updatePhase === 'downloading') return;
   if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.isVisible() || await operationBusy()) return;
   const status = await finishInstallJobs(storage());
   if (status && updatePhase === 'idle') reportUpdate(status);

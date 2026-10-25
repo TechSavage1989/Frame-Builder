@@ -152,7 +152,9 @@ jobs:
               }elseif($entry.Length -gt 10000){throw 'Unexpected README size'}
             }
           }finally{$archive.Dispose()}
-          $prior=(Get-Content release-validation.json | ConvertFrom-Json).previousVersion
+          $config=Get-Content release-validation.json | ConvertFrom-Json
+          $prior=$config.previousVersion
+          "BOOTSTRAP_RELEASE=$($config.bootstrap -eq $true)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "PREVIOUS_VERSION=$prior" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Reuse passed native installer checks for identical published application
         if: env.EXISTING_RELEASE == 'true'
@@ -183,7 +185,7 @@ jobs:
         if: env.PREVIOUS_VERSION != '' && env.REUSE_NATIVE_INSTALLER != 'true'
         run: node scripts/hosted-update-integration.cjs direct
       - name: Promote only after native update and rollback pass
-        if: env.PREVIOUS_VERSION != ''
+        if: env.PREVIOUS_VERSION != '' && env.BOOTSTRAP_RELEASE != 'True'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -193,7 +195,7 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'Stable promotion failed'}
       - name: Previous portable app uses real feed and native update controls
         id: actual_ui_update
-        if: env.PREVIOUS_VERSION != ''
+        if: env.PREVIOUS_VERSION != '' && env.BOOTSTRAP_RELEASE != 'True'
         run: node scripts/hosted-update-integration.cjs ui
       - name: Keep an unsuccessful feed verification out of stable
         if: failure() && steps.actual_ui_update.outcome == 'failure'
