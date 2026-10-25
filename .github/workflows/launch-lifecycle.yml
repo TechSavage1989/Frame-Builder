@@ -1,0 +1,30 @@
+name: Packaged Helper Lifecycle
+on:
+  push:
+    branches: ['validation/launch-lifecycle']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: windows-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download immutable packaged probe
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force validation/fixture | Out-Null
+          gh release download v3.51.12 --repo '${{ github.repository }}' --pattern 'Frame_Builder_3.51.12_Windows_x64.exe' --dir validation/fixture
+          if($LASTEXITCODE -ne 0){throw 'Probe fixture download failed'}
+      - name: Verify independent helper survives actual GUI exit
+        run: node scripts/launch-lifecycle.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Packaged-Helper-Lifecycle
+          path: validation/runtime/*.json
