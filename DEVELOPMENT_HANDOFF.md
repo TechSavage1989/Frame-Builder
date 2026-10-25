@@ -1,23 +1,19 @@
 # Frame Builder development handoff
 
-## Pending 3.51.15 updater test
-
-- Owner requested a small visible change and publication to test the updater from 3.51.14.
-- Candidate 3.51.15 adds an installed-version label beside the builder title, generated from package.json by scripts/sync-builder.cjs. The native window suite verifies the label.
-- release-validation.json targets previousVersion 3.51.14 and requires fresh native installation and actual UI migration checks. No earlier installer run is reused.
-- CAD/browser source, updater behavior, dependencies and settings remain unchanged. Do not call this candidate validated until hosted CI and the release workflow pass.
-
 ## Current verified state (2026-10-25)
 
-- Latest desktop release: Frame Builder 3.51.14, tag v3.51.14.
-- Immutable application source: c869c68636ddbb9064fb2df8c42480972ba4ca87.
+- Latest desktop release: Frame Builder 3.51.15, tag v3.51.15.
+- Immutable application source: 1ff64849330e780c9e102b70af14975e3b67119e.
 - Canonical public source/release repository: https://github.com/TechSavage1989/Frame-Builder.
-- Source Windows CI for the release commit: https://github.com/TechSavage1989/Frame-Builder/actions/runs/40186586089.
-- Completed hosted release verification: https://github.com/TechSavage1989/Frame-Builder/actions/runs/40187778202.
-- Main may contain later test/workflow/documentation fixes. The runtime, CAD, assets and package/build identity still match v3.51.14. Published assets were retained, not rebuilt or replaced.
+- Source Windows CI for the exact release commit: https://github.com/TechSavage1989/Frame-Builder/actions/runs/40218549689.
+- Completed hosted release verification: https://github.com/TechSavage1989/Frame-Builder/actions/runs/40218552668.
+- Owner requested a small visible change and publication to test the updater. Version 3.51.15 adds an installed-version label beside the builder title, generated from package.json by scripts/sync-builder.cjs. The native window suite verifies its value.
+- CAD/browser source, updater runtime, assets, dependencies and saved settings remain unchanged from 3.51.14. Generated desktop HTML changes only its title version and the header label.
+- Main includes later documentation and evidence. Runtime and package/build identity match immutable v3.51.15; published tags and assets were not replaced.
 - Windows portable ZIP contains "Frame Builder.exe" and "README.txt". The separately hosted versioned EXE is the updater payload.
-- Prior 3.51.7 through 3.51.13 releases are development previews and are not stable feed entries. Previews through 3.51.12 require manual replacement. 3.51.13 is the independent-helper client used for the genuine 3.51.13-to-3.51.14 test. The original 3.51.6 application had no updater, so its first installation also requires the ZIP.
-- Last user-accepted CAD/application geometry baseline: Canvas Frame Builder 3.51.6. New desktop updater versions preserve that geometry.
+- The stable feed points to v3.51.15. Fresh actual 3.51.14-to-3.51.15 download, digest verification, native confirmation, installation, visible relaunch, cleanup, settings, window size, custom filename and shortcut checks passed in the release run. Native file locking, accented filename, cross-volume staging and rollback also passed without reusing an earlier installer run.
+- Prior 3.51.7 through 3.51.13 releases are development previews and are not stable feed entries. Previews through 3.51.12 require manual replacement. 3.51.13 was the independent-helper client used for the historical 3.51.13-to-3.51.14 test. Version 3.51.14 is the prior stable updater client.
+- Original 3.51.6 had no updater, so its first installation requires the ZIP. Last user-accepted CAD/application geometry baseline remains Canvas Frame Builder 3.51.6.
 
 ## Preserved functional scope
 
@@ -27,7 +23,7 @@
 - Automatic/manual one-, two- and four-section planning, centered braces and hanger axes.
 - Preview, detachable viewer, STL/STEP/3MF output and Bambu X1C exclusions.
 - Browser source remains "browser/Canvas_Frame_v3_51_6_Builder_and_3D_Viewer.html". CAD source remains under "cad_source".
-- Desktop title and package/update version are 3.51.14. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
+- Desktop title, installed-version label and package/update version are 3.51.15. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
 - Fusion Builder 1.4.2 is distinct. Rejected later Borderless fold-flat designs remain excluded.
 
 ## Source, build and testing
@@ -44,16 +40,16 @@ npm run build:windows
 
 - Legacy packaging helpers under cad_source are retained for baseline provenance. Desktop releases use the top-level npm/Electron build and release workflow; do not ship a legacy CAD ZIP as a desktop update.
 - Runtime: "app/main.cjs", "app/preload.cjs", "app/desktop-ui.js", "app/update-*.cjs", "app/update-install.ps1".
-- "scripts/sync-builder.cjs" generates desktop HTML from the preserved standalone model and updates only desktop-specific integration/title.
+- "scripts/sync-builder.cjs" generates desktop HTML from the preserved standalone model and updates only desktop-specific integration, title and installed-version label.
 - 22 source checks pass, including corrupted downloads, unsafe URLs/identity/version, retry/backoff, ETag persistence, cleanup ownership and real short-duration scheduler checks.
 - Historical timeout and ETag-cache failures have negative controls. The Windows PowerShell missing-hash-command failure was reproduced in run 40178833753; corrected preflight passed in run 40178981099.
 - Native frame/export suite covers all four styles, frame-spring toggle, active export guard, detached viewer, STL/STEP/3MF and isolated renderer.
-- Full production native timing passed for this exact release source in run 40186586089: first check 0 ms after schedule binding, native focus return at 120706 ms, and background check at 300005 ms.
+- Full production native timing passed for this exact release source in run 40218549689: first check 0 ms after schedule binding, native focus return at 120709 ms, and background check at 300011 ms.
 - CI reruns frame/export checks. It may reuse full timer evidence only after checking a passed parent CI and unchanged relevant production sources; otherwise it runs the full wall-clock suite.
-- Actual hosted installation/rollback passed in run 40186586894: held native file lock, accented custom filename, cross-volume staging, visible new window, forced-new-window failure, exact previous EXE restoration/restart and cleanup.
-- Final 3.51.13-to-3.51.14 UI update and preference checks passed in run 40187778202. Its fixture removes the cached payload so the actual Download button must fetch and verify fresh bytes; cleanup asserts both helper logs and all transaction markers are gone. These use the previous portable EXE, real public feed, Download, busy guard, native confirmation, install/relaunch and saved preference/window/shortcut checks.
+- Actual hosted installation/rollback passed in run 40218552668: held native file lock, accented custom filename, cross-volume staging, visible new window, forced-new-window failure, exact previous EXE restoration/restart and cleanup.
+- Final 3.51.14-to-3.51.15 UI update and preference checks passed in run 40218552668. Its fixture removes the cached payload so the actual Download button must fetch and verify fresh bytes; cleanup asserts both helper logs and all transaction markers are gone. These use the previous portable EXE, real public feed, Download, busy guard, native confirmation, install/relaunch and saved preference/window/shortcut checks.
 - Native integration scripts are for isolated test accounts/CI. Hosted updater integration explicitly requires a GitHub Windows runner.
-- Local CAD regressions passed for all section choices, 13 spring/legacy cases and 15 reserved-bed safeguards. Commands: node cad_source/check_all_frame_sections.cjs; node cad_source/check_frame_springs.cjs; node cad_source/check_reserved_beds.cjs. Legacy reserved-bed scripts may write generated reports under Validation; keep those outputs out of releases.
+- Prior-baseline local CAD regressions passed for all section choices, 13 spring/legacy cases and 15 reserved-bed safeguards. Those geometry sources are byte-identical in 3.51.15; the hosted native suite rechecked all four previews and exports. Commands: node cad_source/check_all_frame_sections.cjs; node cad_source/check_frame_springs.cjs; node cad_source/check_reserved_beds.cjs. Legacy reserved-bed scripts may write generated reports under Validation; keep those outputs out of releases.
 
 ## Identity, update feed, settings
 
@@ -70,7 +66,7 @@ npm run build:windows
 - Validation covers HTTPS repository/asset allowlists, size/SHA-256, PE format, exact product/version and release identity. Update ZIPs are not accepted.
 - NSIS can use an x86 outer container for the x64 Electron application. Do not reject the correct portable wrapper solely because its outer PE machine is x86.
 - Installer uses Windows PowerShell 5.1, explicit UTF-8 job reading, direct .NET SHA-256 and native module discovery. This avoids inherited PowerShell 7 module-path problems.
-- Native negative controls: run 40184288439 shows detached PowerShell exits before preparation; actual UI run 40184559145 shows a directly attached helper dies when the GUI closes. Final independent-launcher lifecycle probe 40186547952 uses immutable 3.51.12, closes its actual GUI/portable parent, then verifies helper survival, replacement, a different visible healthy renderer and staging cleanup. This same-version diagnostic is not the genuine version migration. The final release UI gate separately verifies 3.51.13 to 3.51.14.
+- Native negative controls: run 40184288439 shows detached PowerShell exits before preparation; actual UI run 40184559145 shows a directly attached helper dies when the GUI closes. Final independent-launcher lifecycle probe 40186547952 uses immutable 3.51.12, closes its actual GUI/portable parent, then verifies helper survival, replacement, a different visible healthy renderer and staging cleanup. This same-version diagnostic is not the genuine version migration. The historical 3.51.14 release gate separately verified 3.51.13 to 3.51.14; the current gate verifies 3.51.14 to 3.51.15.
 - app/update-launch.cjs uses a short-lived Windows PowerShell bootstrap with Start-Process, native module precedence, a per-user working directory and redirected logs. It returns the actual independent helper PID. The GUI requires a matching live helper-ready record before exiting. Do not replace it with direct attached or detached Electron child-process launch.
 - scripts/launch-matrix.cjs intentionally pins historical 3.51.10; scripts/launch-lifecycle.cjs intentionally pins historical 3.51.12. Both run only in isolated GitHub Windows CI and enable loopback debugging explicitly for the test. Production enables no debugger.
 
@@ -80,7 +76,7 @@ npm run build:windows
 2. Update release notes, manifest notes and "release-validation.json". Set previousVersion to the appropriate prior updater-capable release; remove any old verifiedInstallerRun when application/version changes.
 3. Sync authorized source to main and confirm hosted CI.
 4. Create/update an unpublished matching "release/<version>" branch or run Windows Release from main.
-5. The workflow builds a prerelease, checks its exact source/tag/assets/hashes and native behavior, then promotes only after installer verification. Failed final UI validation demotes it again. A deliberate bootstrap=true config keeps an initial update-capable preview prerelease and skips stable/UI promotion; the delivered 3.51.14 config has no bootstrap flag.
+5. The workflow builds a prerelease, checks its exact source/tag/assets/hashes and native behavior, then promotes only after installer verification. Failed final UI validation demotes it again. A deliberate bootstrap=true config keeps an initial update-capable preview prerelease and skips stable/UI promotion; the delivered 3.51.15 config has no bootstrap flag and sets previousVersion to 3.51.14.
 6. Existing assets may be reverified after test/workflow repairs only if all production source/package/build identity matches the tag. Assets and tags remain immutable.
 7. Recorded native installer tests can be reused only after validating the referenced job step succeeded, its production source matches, and its previous version matches. Final actual UI update still runs.
 8. Allow the public stable feed to propagate after promotion. Verification uses normal backoff and logs unavailable feed responses rather than claiming current.
@@ -90,10 +86,10 @@ npm run build:windows
 
 | Asset | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Frame_Builder_3.51.14_Windows_x64.exe | 100234238 | aef5685e099d37d395e1aae6d9e8b3ce1b95054fae7999da95616c2e98007341 |
-| Frame_Builder_3.51.14_Windows_x64.zip | 100243373 | 90795a508427b8b898223ec8d0d81ed3208a5335bd6422435db8df07d660fa11 |
+| Frame_Builder_3.51.15_Windows_x64.exe | 100234877 | 9e8fea13988fe0c825be30a374d470354a61f70caefe42e8bf860bf87a963052 |
+| Frame_Builder_3.51.15_Windows_x64.zip | 100243998 | 40dcec6a4ebb42db140ca3aa95207f351622059b060f7e5d72c86ddc1fec6f7b |
 
-The hosted manifest and checksum file, and the stable-named EXE inside the ZIP, match those assets. Permanent machine-readable evidence is in validation/RELEASE_VERIFICATION_3.51.14.json. Maintained verifier source 5991066ac4fe7e6dc77dcde6275d014905501d04 also passed Windows CI in run 40187776808.
+The hosted manifest and checksum file, and the stable-named EXE inside the ZIP, match those assets. Permanent machine-readable evidence is in validation/RELEASE_VERIFICATION_3.51.15.json. Historical 3.51.14 evidence remains in validation/RELEASE_VERIFICATION_3.51.14.json. Exact-source CI and the complete release run both passed for 1ff64849330e780c9e102b70af14975e3b67119e on hosted Windows Server 2025 (windows-2025-vs2026 image 20261021.278.1).
 
 ## Remaining limitations
 
