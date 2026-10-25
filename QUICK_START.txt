@@ -1,0 +1,19 @@
+FRAME BUILDER
+
+Extract the complete ZIP to a writable folder, then open Frame Builder.exe.
+Keep that filename and folder for stable shortcut targets. You can also retain a custom executable filename.
+
+The app includes all four frame styles from Canvas Frame Builder 3.51.6, reinforced UV-panel joints, the optional Front Snap frame springs, the established stand designs, and STL, STEP and 3MF exports.
+
+Updates
+The app checks at startup, every five minutes while online, and when returning to focus after at least two minutes.
+Use Download when an update is available. Then use Install and restart after saving your work.
+Downloads and restarts require your action.
+If a new version fails to open properly, the updater restores and restarts the previous executable.
+
+Settings and updater files are stored in your Windows roaming application-data folder under Canvas Frame Builder.
+One previous executable is retained under its updates folder for recovery.
+The executable is not code signed. An SHA-256 match verifies download integrity against the published manifest.
+
+Source, release notes and support:
+https://github.com/TechSavage1989/Frame-Builder

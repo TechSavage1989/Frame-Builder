@@ -219,6 +219,7 @@ function createWindow() {
   if (app.isPackaged) stopSchedule = bindUpdateSchedule({ window: mainWindow, checker: updater, online: () => net.isOnline() });
 }
 async function housekeeping() {
+  if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.isVisible() || await operationBusy()) return;
   const status = await finishInstallJobs(storage());
   if (status && updatePhase === 'idle') reportUpdate(status);
 }

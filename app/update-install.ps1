@@ -115,6 +115,7 @@ try {
     Track-Children
     Start-Sleep -Seconds 1
     if(-not (Test-Path -LiteralPath $health -PathType Leaf)){continue}
+    $newExited=$false
     try {
       $receipt=Get-Content -LiteralPath $health -Raw | ConvertFrom-Json
       if($receipt.token -ceq $job.healthToken -and $receipt.version -ceq $job.version -and
@@ -124,9 +125,12 @@ try {
           Start-Sleep -Seconds 3
           $live=Get-Process -Id $receipt.pid -ErrorAction SilentlyContinue
           if($live -and $live.MainWindowHandle -ne 0){$healthy=$true;break}
+          if(-not $live){$newExited=$true}
         }
+        if(-not $live){$newExited=$true}
       }
     } catch { }
+    if($newExited){throw 'New application exited before health confirmation'}
   }
   if(-not $healthy){throw 'New app did not confirm a responsive visible window'}
   Result 'success' 'The new version opened successfully.'

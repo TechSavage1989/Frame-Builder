@@ -45,7 +45,7 @@ async function finishInstallJobs(storage) {
       } else continue; // Preserve failed transactions requiring manual recovery.
       fs.rmSync(stage, { recursive: true, force: true });
       const payload = path.join(storage, 'update-' + job.sha256 + '.exe');
-      if (job.payload === payload) fs.rmSync(payload, { force: true });
+      if (result.state === 'success' && job.payload === payload) fs.rmSync(payload, { force: true });
       for (const owned of [jobFile, statusFile, path.join(storage, 'ready-' + token + '.json'), path.join(storage, 'health-' + token + '.txt'), path.join(storage, 'helper-' + token + '.ps1'), path.join(storage, 'abort-' + token)]) {
         fs.rmSync(owned, { force: true });
       }

@@ -26,7 +26,7 @@ async function run(win){
   const evaluate=code=>win.webContents.executeJavaScript(code,true);
   await waitFor(()=>evaluate("Boolean(window.CanvasFrameViewer && CanvasFrameViewer.getState().status==='ready')"),'initial preview');
   assert(win.isVisible());assert.equal(await evaluate('typeof require'),'undefined');
-  checks.push({name:'visible responsive isolated window',passed:true});
+  console.log('Native progress:',new Date().toISOString());checks.push({name:'visible responsive isolated window',passed:true});
   const updater=controller.getUpdater();
   let now=Date.now();
   updater.fetcher=async()=>{throw Object.assign(Error('network unavailable'),{status:429,retryAfter:'120'})};
@@ -35,14 +35,14 @@ async function run(win){
   const cooldown=await updater.check(true);
   assert.equal(cooldown.state,'cooldown');assert(updater.nextAllowed>=now+120000);
   assert(!(await evaluate("document.getElementById('frame-update-banner').textContent")).includes('up to date'));
-  checks.push({name:'native IPC banner reports failed check and Retry-After cooldown',passed:true});
+  console.log('Native progress:',new Date().toISOString());checks.push({name:'native IPC banner reports failed check and Retry-After cooldown',passed:true});
   // Restore no automatic network test state. Normal source runs have no packaged schedule.
   for(const style of ['original','solid','light','borderless']){
     await evaluate("document.getElementById('frameStyle').value="+JSON.stringify(style)+";document.getElementById('frameStyle').dispatchEvent(new Event('change'))");
     await waitFor(()=>evaluate("CanvasFrameViewer.getState().status==='ready' && CanvasFrameViewer.getState().params.frameStyle==="+JSON.stringify(style)),style+' geometry');
     const state=await evaluate('CanvasFrameViewer.getState()');
     assert(state.triangles>0);assert(state.parts>0);
-    checks.push({name:style+' native 3D preview',triangles:state.triangles,passed:true});
+    console.log('Native progress:',new Date().toISOString());checks.push({name:style+' native 3D preview',triangles:state.triangles,passed:true});
   }
   await evaluate("document.getElementById('frameSpringsEnabled').checked=false;document.getElementById('frameSpringsEnabled').dispatchEvent(new Event('change'))");
   await waitFor(()=>evaluate("CanvasFrameViewer.getState().status==='ready' && CanvasFrameViewer.getState().params.frameSpringsEnabled===false"),'springs disabled');
@@ -50,13 +50,13 @@ async function run(win){
   await evaluate('exportBusy=true');
   assert.equal(await controller.operationBusy(),true);
   await evaluate('exportBusy=false');
-  checks.push({name:'spring option and active-operation guard',passed:true});
+  console.log('Native progress:',new Date().toISOString());checks.push({name:'spring option and active-operation guard',passed:true});
   await evaluate("document.getElementById('detachViewer').click()");
   await waitFor(()=>evaluate("CanvasFrameWorkspace.getState().mode==='detached'"),'detached viewer',10000);
   assert(BrowserWindow.getAllWindows().some(w=>w!==win));
   await evaluate("document.getElementById('returnViewer').click()");
   await waitFor(()=>evaluate("CanvasFrameWorkspace.getState().mode==='embedded'"),'returned viewer',10000);
-  checks.push({name:'detached viewer and return',passed:true});
+  console.log('Native progress:',new Date().toISOString());checks.push({name:'detached viewer and return',passed:true});
   session.defaultSession.on('will-download',(_e,item)=>{
     item.setSavePath(path.join(out,path.basename(item.getFilename())));
     item.once('done',(_e,state)=>downloads.push({file:item.getSavePath(),state}));
@@ -70,7 +70,7 @@ async function run(win){
     if(ext==='.stl')assert.equal(data.length,84+50*data.readUInt32LE(80));
     if(ext==='.step')assert(data.toString('utf8').startsWith('ISO-10303-21;'));
     if(ext==='.3mf')assert.equal(data.readUInt32LE(0),0x04034b50);
-    checks.push({name:ext+' export through native download handler',bytes:data.length,passed:true});
+    console.log('Native progress:',new Date().toISOString());checks.push({name:ext+' export through native download handler',bytes:data.length,passed:true});
   }
   await exportFile("document.getElementById('partSelect').value='0';document.getElementById('partSelect').dispatchEvent(new Event('change'));document.getElementById('dlpart').click()",'.stl');
   await exportFile("document.getElementById('downloadSTEPPart').click()",'.step');
@@ -94,7 +94,7 @@ async function run(win){
   await waitFor(()=>events.length>=3,'real five-minute background timer',210000);
   assert(events[2]>=299000&&events[2]<325000);
   stop();other.close();
-  checks.push({name:'production two-minute focus and five-minute unfocused native timer',elapsedMilliseconds:events,passed:true});
+  console.log('Native progress:',new Date().toISOString());checks.push({name:'production two-minute focus and five-minute unfocused native timer',elapsedMilliseconds:events,passed:true});
   assert.equal(errors.length,0,JSON.stringify(errors));
   console.log(JSON.stringify(checks));finish();
 }

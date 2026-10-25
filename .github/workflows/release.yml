@@ -2,84 +2,124 @@ name: Windows Release
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'
+    tags: ['v*.*.*']
+    branches: ['release/**']
 permissions:
   contents: write
+concurrency:
+  group: frame-builder-release
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Verify release version and source
+      - name: Verify immutable version and release source
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
-          if ('${{ github.event_name }}' -eq 'push' -and "v$v" -ne '${{ github.ref_name }}') { throw 'Tag does not match package version' }
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid package version' }
+          if ('${{ github.ref_type }}' -eq 'tag' -and "v$v" -ne '${{ github.ref_name }}') { throw 'Tag differs from package version' }
+          if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref_type }}' -eq 'branch' -and "release/$v" -ne '${{ github.ref_name }}') { throw 'Release branch differs from package version' }
           if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ github.ref_name }}' -ne 'main') { throw 'Run manual releases from main' }
+          $old=gh release list --repo '${{ github.repository }}' --json tagName | ConvertFrom-Json
+          if (@($old | Where-Object {$_.tagName -eq "v$v"}).Count -gt 0) { throw 'Published version already exists; increment it' }
+          $env:GIT_TERMINAL_PROMPT='0'
+          $existing=git ls-remote --tags origin "refs/tags/v$v"
+          if ('${{ github.ref_type }}' -ne 'tag' -and $existing) { throw 'Tag already exists; refusing overwrite' }
       - run: npm ci
       - run: node scripts/negative-control.cjs
-      - run: node scripts/sync-builder.cjs
-      - run: node --test scripts/desktop.test.cjs scripts/update.test.cjs
+      - run: npm run check
+      - name: Actual native model, export, focus and five-minute timer tests
+        run: npx electron scripts/native-integration.cjs
       - run: npm run build:windows
-      - name: Native packaged-window smoke test
+      - name: Packaged visible-window and renderer-ready check
         shell: pwsh
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
           ./scripts/windows-smoke.ps1 -Exe "dist/Frame_Builder_${v}_Windows_x64.exe" -ExpectedVersion $v
-      - name: Verify portable executable metadata
-        shell: pwsh
-        run: |
-          $exe=Get-ChildItem dist -Filter 'Frame_Builder_*_Windows_x64.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'Missing release EXE' }
-          if ($exe.VersionInfo.ProductName -notlike '*Frame Builder*') { throw 'Wrong executable identity' }
-          if ($exe.Length -lt 1000000) { throw 'Unexpected executable size' }
-      - name: Prepare release manifest and checksum
+      - name: Prepare immutable EXE, stable-named ZIP, manifest and digests
         shell: pwsh
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
           $env:RELEASE_TAG="v$v"
           node scripts/generate-update-manifest.cjs
-      - name: Publish immutable pre-release assets
+          $dir='dist/portable'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item "dist/Frame_Builder_${v}_Windows_x64.exe" "$dir/Frame Builder.exe"
+          Copy-Item QUICK_START.txt "$dir/README.txt"
+          Compress-Archive -Path "$dir/*" -DestinationPath "dist/Frame_Builder_${v}_Windows_x64.zip"
+          $files=@("Frame_Builder_${v}_Windows_x64.exe","Frame_Builder_${v}_Windows_x64.zip",'update-manifest.json')
+          $lines=@($files | ForEach-Object { ((Get-FileHash -LiteralPath "dist/$_" -Algorithm SHA256).Hash.ToLower())+'  '+$_ })
+          [IO.File]::WriteAllLines((Join-Path (Get-Location) 'dist/SHA256SUMS.txt'),$lines,(New-Object Text.UTF8Encoding($false)))
+      - name: Publish immutable pre-release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
-          $exe="dist/Frame_Builder_${v}_Windows_x64.exe"
-          $args=@('release','create',"v$v",$exe,'dist/update-manifest.json','dist/SHA256SUMS.txt',
-            '--repo','${{ github.repository }}','--title',"Frame Builder v$v",
-            '--notes','Windows portable pre-release for validation. Confirm frame exports and the complete updater workflow before promoting to a stable release.',
-            '--prerelease')
-          if ('${{ github.event_name }}' -eq 'push') {
-            $args+='--verify-tag'
-          } else {
-            $existing=git ls-remote --tags origin "refs/tags/v$v"
-            if ($LASTEXITCODE -ne 0) { throw 'Unable to check existing release tags' }
-            if ($existing) { throw 'Release tag already exists; refusing to overwrite' }
-            $args+=@('--target','${{ github.sha }}')
-          }
+          $args=@('release','create',"v$v","dist/Frame_Builder_${v}_Windows_x64.exe","dist/Frame_Builder_${v}_Windows_x64.zip",
+            'dist/update-manifest.json','dist/SHA256SUMS.txt','--repo','${{ github.repository }}',
+            '--title',"Frame Builder $v",'--notes-file','RELEASE_NOTES.md','--prerelease')
+          if ('${{ github.ref_type }}' -eq 'tag') {$args+='--verify-tag'} else {$args+=@('--target','${{ github.sha }}')}
           gh @args
-      - name: Verify downloadable release assets and exact digest
+          if($LASTEXITCODE -ne 0){throw 'Release publication failed'}
+      - name: Verify exact hosted tag, commit, assets and digests
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
-          $name="Frame_Builder_${v}_Windows_x64.exe"
-          $json=gh release view "v$v" --repo '${{ github.repository }}' --json assets,tagName,isPrerelease | ConvertFrom-Json
-          if (-not $json.isPrerelease) { throw 'Initial release must remain a pre-release until native update testing' }
-          $names=@($json.assets | ForEach-Object { $_.name })
-          foreach($need in @($name,'update-manifest.json','SHA256SUMS.txt')) {
-            if($names -notcontains $need){throw "Missing hosted asset: $need"}
-          }
+          $tag=gh api "repos/${{ github.repository }}/git/ref/tags/v$v" | ConvertFrom-Json
+          if($tag.object.sha -ne '${{ github.sha }}'){throw 'Release tag differs from tested commit'}
           New-Item -ItemType Directory -Force -Path dist/hosted-check | Out-Null
-          gh release download "v$v" --repo '${{ github.repository }}' --pattern $name --dir dist/hosted-check
-          $source=(Get-FileHash -LiteralPath "dist/$name" -Algorithm SHA256).Hash
-          $hosted=(Get-FileHash -LiteralPath "dist/hosted-check/$name" -Algorithm SHA256).Hash
-          if($source -ne $hosted){throw 'Hosted EXE digest differs from verified local artifact'}
-          Write-Host "Hosted release verified: v$v / $hosted"
+          gh release download "v$v" --repo '${{ github.repository }}' --dir dist/hosted-check
+          foreach($name in @("Frame_Builder_${v}_Windows_x64.exe","Frame_Builder_${v}_Windows_x64.zip",'update-manifest.json','SHA256SUMS.txt')){
+            if(-not(Test-Path -LiteralPath "dist/hosted-check/$name")){throw "Missing asset: $name"}
+            if((Get-FileHash "dist/$name").Hash -ne (Get-FileHash "dist/hosted-check/$name").Hash){throw "Hosted digest mismatch: $name"}
+          }
+          $prior=(Get-Content release-validation.json | ConvertFrom-Json).previousVersion
+          "PREVIOUS_VERSION=$prior" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Real hosted download, native replacement, lock wait and rollback
+        if: env.PREVIOUS_VERSION != ''
+        run: node scripts/hosted-update-integration.cjs direct
+      - name: Promote only after native update and rollback pass
+        if: env.PREVIOUS_VERSION != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          gh release edit "v$v" --repo '${{ github.repository }}' --prerelease=false --latest
+          if($LASTEXITCODE -ne 0){throw 'Stable promotion failed'}
+      - name: Previous portable app uses real feed and native update controls
+        id: actual_ui_update
+        if: env.PREVIOUS_VERSION != ''
+        run: node scripts/hosted-update-integration.cjs ui
+      - name: Keep an unsuccessful feed verification out of stable
+        if: failure() && steps.actual_ui_update.outcome == 'failure'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          gh release edit "v$v" --repo '${{ github.repository }}' --prerelease
+      - name: Retain exact release and validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Frame-Builder-Release-Validation
+          path: |
+            dist/Frame_Builder_*.exe
+            dist/Frame_Builder_*.zip
+            dist/update-manifest.json
+            dist/SHA256SUMS.txt
+            validation/runtime/*.json
+          retention-days: 30
