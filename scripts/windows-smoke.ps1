@@ -12,6 +12,8 @@ $updateDir=Join-Path $env:APPDATA 'Canvas Frame Builder/updates'
 New-Item -ItemType Directory -Path $updateDir -Force | Out-Null
 $nonce=([guid]::NewGuid().ToString('N')+[guid]::NewGuid().ToString('N')).Substring(0,48)
 $health=Join-Path $updateDir ('health-'+[guid]::NewGuid().ToString('N').Substring(0,24)+'.txt')
+$env:FRAME_BUILDER_HEALTH_FILE = $health
+$env:FRAME_BUILDER_HEALTH_TOKEN = $nonce
 $process=Start-Process -FilePath $Exe -PassThru -ArgumentList @(
   '--frame-update-health-file',('"'+$health+'"'),'--frame-update-health-token',$nonce)
 try {
@@ -26,7 +28,19 @@ try {
       break
     }
   }
-  if(-not $accepted) { throw 'Packaged Electron window did not create a verified visible-window receipt' }
+  if(-not $accepted) {
+    Write-Host ('Health file exists: '+(Test-Path -LiteralPath $health -PathType Leaf))
+    if(Test-Path -LiteralPath $health -PathType Leaf) {
+      $receiptText=Get-Content -LiteralPath $health -Raw
+      Write-Host ('Health receipt bytes: '+$receiptText.Length)
+    }
+    $running=@(Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'Frame Builder*' -or $_.Name -like 'Frame_Builder*' })
+    foreach($p in $running) {
+      $argsText=([string]$p.CommandLine).Replace($nonce,'[health-token-redacted]')
+      Write-Host ('Startup process: '+$p.ProcessId+' '+$p.Name+' '+$argsText)
+    }
+    throw 'Packaged Electron window did not create a verified visible-window receipt'
+  }
   Write-Host ('Native Windows visible-window check PASS: '+$ExpectedVersion)
 } finally {
   try { if(-not $process.HasExited) { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue } } catch {}
