@@ -13,13 +13,13 @@ const current=require('../package.json').version,previous=process.env.PREVIOUS_V
 if(!/^\d+\.\d+\.\d+$/.test(previous||''))throw Error('Set PREVIOUS_VERSION to an existing release');
 const mode=process.argv[2]||'direct',out=path.resolve('validation/runtime');
 fs.mkdirSync(out,{recursive:true});
-const ps=(code,env={})=>execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',code],{encoding:'utf8',windowsHide:true,env:{...process.env,...env},timeout:30000}).trim();
+const ps=(code,env={})=>execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',"[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);"+code],{encoding:'utf8',windowsHide:true,env:{...process.env,...env},timeout:30000}).trim();
 const roaming=ps("[Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)");
 const storage=path.join(roaming,'Canvas Frame Builder','updates');
 fs.mkdirSync(storage,{recursive:true});
 const testRoot=path.resolve('validation/runtime/install-'+mode);
 fs.mkdirSync(testRoot,{recursive:true});
-const target=path.join(testRoot,'User Named Frame.exe');
+const target=path.join(testRoot,mode==='direct'?'User Named Främé.exe':'User Named Frame.exe');
 const shortcut=path.join(testRoot,'Frame Builder.lnk');
 const checks=[];
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
@@ -182,7 +182,15 @@ async function uiTest(oldRelease,newRelease){
   fs.writeFileSync(path.join(roaming,'Canvas Frame Builder','window-state.json'),JSON.stringify({x:40,y:30,width:1000,height:760}));
   ps("$s=New-Object -ComObject WScript.Shell;$l=$s.CreateShortcut($env:FRAME_TEST_SHORTCUT);$l.TargetPath=$env:FRAME_TEST_TARGET;$l.Save()",{FRAME_TEST_SHORTCUT:shortcut,FRAME_TEST_TARGET:target});
   if(mode==='direct'){
+    const encodingProbe=path.join(testRoot,'encoding-probe.json');
+    const expected=path.join(testRoot,'Främé.exe');
+    fs.writeFileSync(encodingProbe,JSON.stringify({target:expected}),'utf8');
+    const oldRead=ps("$j=Get-Content -LiteralPath $env:FRAME_ENCODING_PROBE -Raw|ConvertFrom-Json;[string]($j.target -ceq $env:FRAME_ENCODING_EXPECTED)",{FRAME_ENCODING_PROBE:encodingProbe,FRAME_ENCODING_EXPECTED:expected});
+    const correctRead=ps("$j=Get-Content -LiteralPath $env:FRAME_ENCODING_PROBE -Encoding UTF8 -Raw|ConvertFrom-Json;[string]($j.target -ceq $env:FRAME_ENCODING_EXPECTED)",{FRAME_ENCODING_PROBE:encodingProbe,FRAME_ENCODING_EXPECTED:expected});
+    assert.equal(oldRead,'False');assert.equal(correctRead,'True');
+    checks.push({name:'Windows PowerShell encoding negative control and UTF-8 correction',passed:true});
     await transaction(previous,newRelease,{holdLock:true});
+    checks.push({name:'accented custom executable filename survives installation',filename:path.basename(target),passed:true});
     // Download is intentionally cleaned after success. Reacquire and revalidate it.
     const next=await release(current);
     fs.copyFileSync(oldRelease.file,target);

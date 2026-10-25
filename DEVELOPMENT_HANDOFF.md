@@ -1,6 +1,11 @@
 # Frame Builder development handoff
 
-## Release verification in progress (2026-10-25)
+## Final 3.51.9 verification in progress (2026-10-25)
+- 3.51.7 prerelease publication succeeded in run 40177181420. 3.51.8 exact-source Windows CI succeeded in run 40177726822 on commit 8c473e7d4df93bb8f211af2c3182c3bf3f519d98. Its hosted update workflow 40177727938 is still in progress.
+- Final candidate 3.51.9 makes PowerShell 5.1 job-file decoding explicitly UTF-8 and tests an accented custom executable filename. It also gives the generated desktop HTML the actual package version in its title. Source browser/CAD geometry remains 3.51.6.
+- 3.51.9 must verify an actual hosted update from 3.51.8 before becoming the delivered stable build. Do not overwrite any existing published version.
+
+## Earlier release verification plan (2026-10-25)
 - 3.51.8 is the follow-up candidate for full 3.51.7-to-3.51.8 verification. 3.51.7 initial prerelease workflow: https://github.com/TechSavage1989/Frame-Builder/actions/runs/40177181420. Do not call either release stable before its workflow succeeds.
 - Windows run 40176816045 passed the native integration step: all four frame styles, spring toggle, active export guard, detachable viewer, STL/STEP/3MF saving, real two-minute focus return and real five-minute background timer. Its final build/smoke status must still be checked.
 - 3.51.8 release gating now reuses green CI for the exact commit instead of repeating the five-minute native suite. It publishes an immutable prerelease, verifies hosted hashes, runs native replacement/lock/rollback tests, promotes it, and checks the actual previous portable application's update controls. An unsuccessful final UI check demotes the release again.

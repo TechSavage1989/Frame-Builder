@@ -64,7 +64,7 @@ function Result([string]$state,[string]$message) {
 }
 try {
   Assert-Absolute $JobFile
-  $job=Get-Content -LiteralPath $JobFile -Raw | ConvertFrom-Json
+  $job=Get-Content -LiteralPath $JobFile -Encoding UTF8 -Raw | ConvertFrom-Json
   if($job.appId -cne 'com.techsavage3d.canvasframe' -or $job.id -notmatch '^[a-f0-9]{24}$'){throw 'Wrong update job identity'}
   foreach($p in @($job.target,$job.payload,$job.stage,$job.storage)){Assert-Absolute $p}
   if((Split-Path -Leaf $JobFile) -cne ('install-'+$job.id+'.json') -or
@@ -117,7 +117,7 @@ try {
     if(-not (Test-Path -LiteralPath $health -PathType Leaf)){continue}
     $newExited=$false
     try {
-      $receipt=Get-Content -LiteralPath $health -Raw | ConvertFrom-Json
+      $receipt=Get-Content -LiteralPath $health -Encoding UTF8 -Raw | ConvertFrom-Json
       if($receipt.token -ceq $job.healthToken -and $receipt.version -ceq $job.version -and
          $receipt.windowVisible -eq $true -and $receipt.rendererReady -eq $true){
         $live=Get-Process -Id $receipt.pid -ErrorAction SilentlyContinue

@@ -2,7 +2,7 @@
 
 1. Read DEVELOPMENT_HANDOFF.md before changing source, distribution, build scripts, or releases.
 2. Main public repository is https://github.com/TechSavage1989/Frame-Builder. Public source and release distribution are explicitly approved by the owner as of 2026-10-25. Do not change repository visibility or select a license without a separate request.
-3. Last complete working application is Canvas Frame Builder 3.51.6. The desktop updater candidates 3.51.7 and 3.51.8 are development-only until the exact release workflow, Windows launch and complete updater verification pass. Never treat incomplete candidate code as a user-confirmed baseline.
+3. Last complete working application is Canvas Frame Builder 3.51.6. The desktop updater candidates 3.51.8 and 3.51.9 require full release validation and are development-only until the exact release workflow, Windows launch and complete updater verification pass. Never treat incomplete candidate code as a user-confirmed baseline.
 4. Preserve all four frame styles, UV base and split-panel connectors, optional front-snap frame springs, print bed exclusion safeguards, stand designs, preview, settings, and STEP/STL/3MF export behavior unless asked otherwise.
 5. Windows target is a portable, stable-named Frame Builder.exe at the installed location. Store updater state, downloads, logs and staging within the legacy Canvas Frame Builder per-user app-data path, maintaining settings and shortcut compatibility.
 6. Never download, install, or restart without user action. No offline or failed check may be represented as up to date. Do not bypass release integrity, identity, or path validation.
