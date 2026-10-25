@@ -3,12 +3,12 @@ const { app, BrowserWindow, Menu, session, dialog, ipcMain, net, screen } = requ
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
-const { spawn } = require('node:child_process');
+const { launchWindowsHelper } = require('./update-launch.cjs');
 const { UpdateCheck } = require('./update-check.cjs');
 const { bindUpdateSchedule } = require('./update-scheduler.cjs');
 const { downloadVerified } = require('./update-download.cjs');
 const { verifyWindowsIdentity } = require('./update-windows.cjs');
-const { finishInstallJobs, hashFile } = require('./update-housekeeping.cjs');
+const { finishInstallJobs, hashFile, isRunning } = require('./update-housekeeping.cjs');
 const { safeFilename, fileFilters, windowPreferences } = require('./desktop-policy.cjs');
 const { APP_ID, releaseUrl } = require('./update-core.cjs');
 const preload = path.join(__dirname, 'preload.cjs');
@@ -58,19 +58,16 @@ async function downloadUpdate() {
 }
 async function waitForHelper(file, id, child, resultFile, helperLog) {
   const until = Date.now() + 45000;
-  let spawnError;
-  child.once('error', error => { spawnError = error; });
   while (Date.now() < until) {
-    if (spawnError) throw Error('Could not start the installer: ' + spawnError.message);
     if (fs.existsSync(resultFile)) {
       const result = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
       if (result.id === id && result.state !== 'success') throw Error(result.message);
     }
     if (fs.existsSync(file)) {
       const ready = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (ready.id === id && ready.helperPid === child.pid) return;
+      if (ready.id === id && ready.helperPid === child.pid && isRunning(child.pid)) return;
     }
-    if (child.exitCode !== null) {
+    if (!isRunning(child.pid)) {
       const detail = fs.existsSync(helperLog) ? fs.readFileSync(helperLog, 'utf8').trim().slice(-2000) : '';
       throw Error('Windows installer exited before preparation completed.' + (detail ? ' ' + detail : ' See the updater log in application settings storage.'));
     }
@@ -106,18 +103,8 @@ async function installUpdate() {
       if (fs.existsSync(log) && fs.statSync(log).size > 1000000) fs.writeFileSync(log, '');
       fs.writeFileSync(jobFile, JSON.stringify(job), { mode: 0o600, flag: 'wx' });
       fs.writeFileSync(helper, fs.readFileSync(path.join(__dirname, 'update-install.ps1')), { mode: 0o600, flag: 'wx' });
-      const helperLog = path.join(folder, 'helper-' + id + '.log');
-      const logFd = fs.openSync(helperLog, 'wx', 0o600);
-      let child;
-      try {
-        child = spawn(path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-          ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', helper, '-JobFile', jobFile],
-          // DETACHED_PROCESS makes Windows PowerShell exit before its script.
-          // A normal Windows child continues after this GUI process exits.
-          { detached: false, stdio: ['ignore', logFd, logFd], windowsHide: true });
-      } finally { fs.closeSync(logFd); }
-      child.unref();
-      await waitForHelper(path.join(folder, 'ready-' + id + '.json'), id, child, path.join(folder, 'result-' + id + '.json'), helperLog);
+      const child = await launchWindowsHelper(helper, jobFile, folder);
+      await waitForHelper(path.join(folder, 'ready-' + id + '.json'), id, child, path.join(folder, 'result-' + id + '.json'), child.helperLog);
       if (await operationBusy()) throw Error('A model or export started during preparation. Finish it before restarting.');
       app.quit();
       return true;

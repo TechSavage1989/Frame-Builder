@@ -1,0 +1,42 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const {spawn,execFileSync}=require('node:child_process');
+if(process.platform!=='win32'||process.env.GITHUB_ACTIONS!=='true')throw Error('Isolated Windows CI only');
+const {hashFile,isRunning}=require('../app/update-housekeeping.cjs');
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const root=path.resolve('validation/runtime');fs.mkdirSync(root,{recursive:true});
+const source=path.resolve('validation/fixture/Frame_Builder_3.51.12_Windows_x64.exe');
+const expected='51fe08524d45c27b8f0bb2d445cb17e97078c6277888b69d57c0ae540212f966';
+assert.equal(crypto.createHash('sha256').update(fs.readFileSync(source)).digest('hex'),expected);
+const target=path.join(root,'Lifecycle Främé.exe');fs.copyFileSync(source,target);
+const storage=path.join(execFileSync('powershell.exe',['-NoProfile','-Command',"[Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)"],{encoding:'utf8'}).trim(),'Canvas Frame Builder','updates');fs.mkdirSync(storage,{recursive:true});
+const health=path.join(storage,'health-'+crypto.randomBytes(12).toString('hex')+'.txt');
+const appProcess=spawn(target,['--inspect=127.0.0.1:19395'],{stdio:'ignore',env:{...process.env,FRAME_BUILDER_HEALTH_FILE:health,FRAME_BUILDER_HEALTH_TOKEN:crypto.randomBytes(24).toString('hex')}});
+async function waitFor(fn,ms=45000){const end=Date.now()+ms;while(Date.now()<end){const r=await fn();if(r)return r;await delay(100)}throw Error('Lifecycle probe timed out')}
+(async()=>{
+ await waitFor(()=>fs.existsSync(health));
+ const old=JSON.parse(fs.readFileSync(health,'utf8'));fs.rmSync(health);
+ const endpoint=await waitFor(async()=>{try{return (await(await fetch('http://127.0.0.1:19395/json/list')).json())[0]}catch{return null}});
+ const ws=new WebSocket(endpoint.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+ let serial=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data),p=pending.get(m.id);if(p){pending.delete(m.id);p(m)}};
+ const ev=expression=>new Promise(resolve=>{const id=++serial;pending.set(id,resolve);ws.send(JSON.stringify({id,method:'Runtime.evaluate',params:{expression,returnByValue:true,awaitPromise:true}}))}).then(m=>{if(m.error||m.result?.exceptionDetails)throw Error(JSON.stringify(m));return m.result?.result?.value});
+ const q={source,target,storage,expected,launcher:path.resolve('app/update-launch.cjs')};
+ const job=await ev(`(async()=>{const q=${JSON.stringify(q)};const req=process.mainModule.require.bind(process.mainModule),fs=req('node:fs'),path=req('node:path'),crypto=req('node:crypto');const id=crypto.randomBytes(12).toString('hex');const payload=path.join(q.storage,'update-'+q.expected+'.exe');fs.copyFileSync(q.source,payload);const job={appId:'com.techsavage3d.canvasframe',id,target:q.target,storage:q.storage,payload,version:'3.51.12',sha256:q.expected,oldSha256:q.expected,healthToken:crypto.randomBytes(24).toString('hex'),parentPid:process.pid,stage:path.join(path.dirname(q.target),'.frame-builder-update-'+id)};const jf=path.join(q.storage,'install-'+id+'.json'),helper=path.join(q.storage,'helper-'+id+'.ps1');fs.writeFileSync(jf,JSON.stringify(job));fs.writeFileSync(helper,fs.readFileSync(path.join(req('electron').app.getAppPath(),'app','update-install.ps1')));const launch=await req(q.launcher).launchWindowsHelper(helper,jf,q.storage);return {...job,helperPid:launch.pid}})()`);
+ await waitFor(()=>fs.existsSync(path.join(storage,'ready-'+job.id+'.json')));
+ assert.equal(JSON.parse(fs.readFileSync(path.join(storage,'ready-'+job.id+'.json'),'utf8')).helperPid,job.helperPid);
+ console.log('Independent helper prepared:',job.helperPid);
+ // Exercise the actual packaged GUI quit, then its portable launcher exit.
+ await ev("setTimeout(()=>process.mainModule.require('electron').app.quit(),100);true");ws.close();
+ await waitFor(()=>!isRunning(old.pid),30000);
+ console.log('Actual packaged parent has exited');
+ const newHealth=path.join(storage,'health-'+job.id+'.txt');
+ const fresh=await waitFor(()=>{try{const r=JSON.parse(fs.readFileSync(newHealth,'utf8'));return r.token===job.healthToken&&r.version==='3.51.12'&&r.windowVisible&&r.rendererReady?r:null}catch{return null}},120000);
+ assert.notEqual(fresh.pid,old.pid);
+ const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(path.join(storage,'result-'+job.id+'.json'),'utf8'))}catch{return !fs.existsSync(job.stage)&&isRunning(fresh.pid)?{state:'success'}:null}},45000);
+ assert.equal(result.state,'success');await waitFor(()=>!fs.existsSync(job.stage),30000);
+ assert.equal(await hashFile(target),expected);
+ assert.equal(await hashFile(path.join(storage,'rollback.exe')),expected);
+ const report={fixture:'3.51.12',sameVersionLifecycleProbe:true,oldParentExited:true,newVisibleRendererConfirmed:true,helperSurvivedParent:true,result:result.state,stageCleaned:true,passed:true};
+ fs.writeFileSync(path.join(root,'launch-lifecycle.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+ execFileSync('powershell.exe',['-NoProfile','-Command',`(Get-Process -Id ${fresh.pid}).CloseMainWindow()|Out-Null`]);
+})().catch(e=>{console.error(e);console.error(fs.existsSync(path.join(storage,'install.log'))?fs.readFileSync(path.join(storage,'install.log'),'utf8'):'No install log');appProcess.kill();process.exit(1)});

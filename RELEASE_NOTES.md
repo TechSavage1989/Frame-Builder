@@ -1,19 +1,9 @@
-# Frame Builder 3.51.12
+# Frame Builder 3.51.13 development preview
 
-Adds a reliable Windows portable desktop updater while preserving the Canvas Frame Builder 3.51.6 CAD design.
+Uses Windows Start-Process to launch the update helper independently of the Electron GUI and its process job. The bootstrap exits before restart, returns the real helper PID, uses per-user storage as its working directory and captures output there. The app waits for the matching helper-ready record before closing.
 
-- Checks at startup, every five minutes while online, and on focus return after two minutes without a check.
-- Uses persistent validated cache/ETags, single-flight requests, manual cooldowns and server backoff.
-- Downloads and installs only on request, with progress, short release notes and clear errors. Active models and exports prevent restart.
-- Validates the trusted repository, release, asset filename, size, SHA-256, Windows PE format and exact product/version metadata.
-- Runs the Windows PowerShell helper as a normal child process. A native negative control reproduced the old detached-process failure before the script loaded.
-- Stages on the destination filesystem and requires a responsive visible new app window. Failed launches restore and restart the previous executable.
-- Preserves per-user settings, window size, existing custom executable names and shortcut targets. Supports accented filenames and cross-volume staging. Keeps one rollback backup and cleans app-owned transaction files after health confirmation and helper exit.
+Native lifecycle probe 40186253403 used the actual published 3.51.12 app, closed its real GUI and portable launcher, then confirmed independent helper survival, replacement, a new visible healthy renderer, rollback backup and staging cleanup. This same-version diagnostic is not a substitute for the next genuine two-version release test.
 
-Download the Windows ZIP, extract it, and run Frame Builder.exe. Original 3.51.6 users need that first manual install because the original app has no updater. Replace development previews 3.51.7 through 3.51.10 manually if their updater cannot prepare. 3.51.11 is the corrected update-capable preview used for the actual previous-to-new release test.
+This is intentionally a prerelease update client. It is not a stable feed entry. The following version must pass the full previous-to-new in-app update test before stable delivery. Older previews through 3.51.12 should be replaced manually.
 
-All four frame styles, reinforced UV-panel joints, optional frame springs, centered braces/mounts, established stands and STL/STEP/3MF exports retain the accepted 3.51.6 geometry. Fusion Builder is separate.
-
-The release workflow checks exact hosted source/tag/assets/hashes, native file locking, visible relaunch, interrupted-launch rollback and actual 3.51.11 in-app download/install/restart with settings and shortcut preservation. Stable delivery requires all gates to pass.
-
-The app is not code signed. SHA-256 verifies integrity against the trusted release manifest, not publisher signing. Hosted Windows checks do not replace testing on the user's own PC or physical print/fit/load tests. Offline and throttling tests inject request failures; a live shared-IP API limit or OS-wide disconnect is not forced.
+The complete Canvas Frame Builder 3.51.6 design is preserved: four frame styles, reinforced UV-panel joints, optional frame springs, accepted stands, preview, settings and STL/STEP/3MF. Source and browser geometry are unchanged. Downloads/restarts require user action. Trusted release/asset/hash/PE/product/version validation and rollback remain mandatory. Not code signed; own-PC and physical print validation are not performed.

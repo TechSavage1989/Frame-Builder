@@ -1,3 +1,4 @@
 {
-  "previousVersion": "3.51.11"
+  "previousVersion": "3.51.12",
+  "bootstrap": true
 }
