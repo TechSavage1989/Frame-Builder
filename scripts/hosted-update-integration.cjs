@@ -41,7 +41,7 @@ async function closePid(pid,waitUnlock=true){
   if(waitUnlock)await waitFor(()=>ps("try{$f=[IO.File]::Open($env:FRAME_TEST_TARGET,'Open','ReadWrite','None');$f.Dispose();'ready'}catch{'locked'}",{FRAME_TEST_TARGET:target})==='ready','portable launcher file unlock',30000);
 }
 function runningFrame(){
-  const json=ps("Get-Process -Name 'Frame Builder' -ErrorAction SilentlyContinue | Where-Object {$_.MainWindowHandle -ne 0} | Select-Object -First 1 -Property Id | ConvertTo-Json -Compress");
+  const json=ps("Get-Process -Name 'Frame Builder' -ErrorAction SilentlyContinue | Where-Object {$_.MainWindowHandle -ne 0} | Select-Object -First 1 -Property Id | ConvertTo-Json -Compress;exit 0");
   return json?JSON.parse(json).Id:null;
 }
 async function launch(version,debugPort){
