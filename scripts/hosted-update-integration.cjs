@@ -48,8 +48,14 @@ async function launch(version,debugPort){
   fs.rmSync(path.join(storage,'check-cache.json'),{force:true});
   const h=receiptRequest();
   const nativeModules=path.join(process.env.SystemRoot,'System32','WindowsPowerShell','v1.0','Modules');
+  const launchEnv=Object.fromEntries(Object.entries(process.env).filter(([key])=>key.toLowerCase()!=='psmodulepath'));
+  launchEnv.PSModulePath=[path.join(process.env.USERPROFILE,'Documents','WindowsPowerShell','Modules'),path.join(process.env.ProgramFiles,'WindowsPowerShell','Modules'),nativeModules].join(';');
+  if(debugPort){
+    const command=execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',"$ErrorActionPreference='Stop';(Get-Command Get-FileHash).Name"],{env:launchEnv,encoding:'utf8',windowsHide:true}).trim();
+    assert.equal(command,'Get-FileHash');
+  }
   const p=spawn(target,debugPort?['--remote-debugging-port='+debugPort,'--remote-debugging-address=127.0.0.1']:[],
-    {stdio:'ignore',env:{...process.env,PSModulePath:nativeModules+';'+(process.env.PSModulePath||''),FRAME_BUILDER_HEALTH_FILE:h.file,FRAME_BUILDER_HEALTH_TOKEN:h.token}});
+    {stdio:'ignore',env:{...launchEnv,FRAME_BUILDER_HEALTH_FILE:h.file,FRAME_BUILDER_HEALTH_TOKEN:h.token}});
   const r=await waitFor(()=>receipt(h.file,h.token,version),'visible '+version+' window');
   fs.rmSync(h.file,{force:true});
   return {p,receipt:r};
@@ -164,7 +170,14 @@ async function uiTest(oldRelease,newRelease){
   const jobFile=await waitFor(()=>fs.readdirSync(storage).find(n=>/^install-[a-f0-9]{24}\.json$/.test(n)),'actual app-created install job');
   const job=JSON.parse(fs.readFileSync(path.join(storage,jobFile),'utf8'));
   client.socket.close();
-  const h=await waitFor(()=>receipt(path.join(storage,'health-'+job.id+'.txt'),job.healthToken,current),'actual installed visible app');
+  const h=await waitFor(()=>{
+    const f=path.join(storage,'result-'+job.id+'.json');
+    if(fs.existsSync(f)){
+      const result=JSON.parse(fs.readFileSync(f,'utf8'));
+      if(result.state!=='success')throw Error('Actual app installer failed: '+JSON.stringify(result));
+    }
+    return receipt(path.join(storage,'health-'+job.id+'.txt'),job.healthToken,current)
+  },'actual installed visible app');
   const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(path.join(storage,'result-'+job.id+'.json'),'utf8'))}catch{return !fs.existsSync(path.join(storage,jobFile))&&!fs.existsSync(job.stage)&&isRunning(h.pid)?{state:'success',cleanupObserved:true}:null}},'actual installed result');
   assert.equal(result.state,'success',JSON.stringify(result));
   await waitCleanup(job);assert.equal(await hashFile(target),newRelease.info.asset.sha256);
