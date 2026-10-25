@@ -203,8 +203,18 @@ async function uiTest(oldRelease,newRelease){
     await transaction(previous,next,{interrupt:true});
     checks.push({name:'cross-volume download to target staging',crossVolume:path.parse(storage).root.toLowerCase()!==path.parse(target).root.toLowerCase(),passed:true});
   }else if(mode==='ui'){
-    const feed=await new UpdateCheck({installed:previous}).check();
-    assert.equal(feed.state,'available');assert.equal(feed.info.latestVersion,current);
+    const checker=new UpdateCheck({installed:previous});
+    const deadline=Date.now()+5*60000;
+    let feed;
+    while(Date.now()<deadline){
+      feed=await checker.check();
+      if(feed.state==='available'&&feed.info.latestVersion===current)break;
+      console.log('Waiting for public stable feed:',JSON.stringify(feed));
+      const pause=Math.max(60000,checker.nextAllowed-Date.now()+50);
+      if(Date.now()+pause>=deadline)throw Error('Public stable feed not ready within verification window: '+JSON.stringify(feed));
+      await delay(pause);
+    }
+    assert.equal(feed.state,'available',JSON.stringify(feed));assert.equal(feed.info.latestVersion,current);
     await uiTest(oldRelease,newRelease);
   }else throw Error('Unknown verification mode');
   assert(!fs.readdirSync(testRoot).some(n=>n.startsWith('.frame-builder-update-')));
