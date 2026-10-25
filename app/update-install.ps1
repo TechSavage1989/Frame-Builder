@@ -1,6 +1,9 @@
 # User-initiated portable Windows update transaction. Compatible with Windows PowerShell 5.1.
 param([Parameter(Mandatory=$true)][string]$JobFile)
 $ErrorActionPreference='Stop'
+# A caller launched from PowerShell 7 can pass a module path that hides
+# Windows PowerShell's own modules. Prefer the native built-ins in this helper.
+$env:PSModulePath=[IO.Path]::Combine($PSHOME,'Modules')+[IO.Path]::PathSeparator+$env:PSModulePath
 $job=$null; $swapped=$false; $child=$null; $owned=@{}; $parentExited=$false
 function Write-Json([string]$file, $value) {
   $temp=$file+'.tmp'
@@ -11,7 +14,13 @@ function Log([string]$text) {
   if($null -ne $job) { Add-Content -LiteralPath (Join-Path $job.storage 'install.log') -Value ((Get-Date).ToString('o')+' '+$text) }
 }
 function HashOK([string]$file,[string]$hash) {
-  return (Test-Path -LiteralPath $file -PathType Leaf) -and ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ieq $hash)
+  if(-not (Test-Path -LiteralPath $file -PathType Leaf)){return $false}
+  $stream=[IO.File]::OpenRead($file)
+  $digest=[Security.Cryptography.SHA256]::Create()
+  try {
+    $actual=[BitConverter]::ToString($digest.ComputeHash($stream)).Replace('-','')
+    return $actual -ieq $hash
+  } finally {$digest.Dispose();$stream.Dispose()}
 }
 function Assert-Absolute([string]$file) {
   if($file -notmatch '^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+\\)' -or [IO.Path]::GetFullPath($file) -ine $file) { throw 'Installer paths must be canonical absolute Windows paths' }
