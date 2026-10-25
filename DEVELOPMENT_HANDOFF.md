@@ -1,6 +1,13 @@
 # Frame Builder development handoff
 
-## Updater audit in progress (2026-10-25)
+## Release verification in progress (2026-10-25)
+- 3.51.8 is the follow-up candidate for full 3.51.7-to-3.51.8 verification. 3.51.7 initial prerelease workflow: https://github.com/TechSavage1989/Frame-Builder/actions/runs/40177181420. Do not call either release stable before its workflow succeeds.
+- Windows run 40176816045 passed the native integration step: all four frame styles, spring toggle, active export guard, detachable viewer, STL/STEP/3MF saving, real two-minute focus return and real five-minute background timer. Its final build/smoke status must still be checked.
+- 3.51.8 release gating now reuses green CI for the exact commit instead of repeating the five-minute native suite. It publishes an immutable prerelease, verifies hosted hashes, runs native replacement/lock/rollback tests, promotes it, and checks the actual previous portable application's update controls. An unsuccessful final UI check demotes the release again.
+- Stable-named Frame Builder.exe is included in the Windows ZIP. An additional versioned EXE remains the updater asset.
+- Local CAD regressions passed: all frame section choices, 13 spring/legacy cases and 15 reserved-bed safeguards. No CAD source or standalone HTML changed.
+
+## Completed source audit (2026-10-25)
 - Unpublished 3.51.7 candidate now preserves validated ETags across errors and process restarts, persists rate-limit backoff, runs main-process checks even while unfocused, and binds the two-minute focus policy to the actual window.
 - Downloads and installs are single-flight. Windows PE, exact release filename/version, product metadata, byte length and SHA-256 are checked. Portable NSIS launchers may be x86 containers carrying the x64 application.
 - Installer now supports Windows PowerShell 5.1, validates/stages before the old window closes, uses same-volume File.Replace, and requires a responsive visible new window plus ready CAD preview. It restarts/restores the previous executable on failures.

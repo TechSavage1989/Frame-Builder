@@ -1,6 +1,6 @@
 {
   "name": "canvas-frame-builder",
-  "version": "3.51.7",
+  "version": "3.51.8",
   "private": true,
   "description": "Offline frame and UV panel designer with STL, STEP and 3MF exports.",
   "author": "TechSavage3D",

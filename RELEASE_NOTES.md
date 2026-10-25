@@ -1,4 +1,4 @@
-# Frame Builder 3.51.7
+# Frame Builder 3.51.8
 
 Adds a portable desktop updater while preserving the Canvas Frame Builder 3.51.6 CAD design.
 
@@ -13,6 +13,6 @@ Download the Windows ZIP, extract it, and run Frame Builder.exe. The standalone 
 
 All four frame styles, reinforced UV-panel joints, optional frame springs, stands and STL/STEP/3MF exports retain the 3.51.6 geometry. Fusion Builder is a separate tool.
 
-This initial updater-enabled build is a prerelease used to verify the next hosted version. Use the next stable release once its previous-to-new update verification succeeds.
+The release workflow verifies a hosted update from 3.51.7, native file locking, visible relaunch, interrupted-launch rollback, settings and shortcut preservation. Stable promotion requires those checks. The actual in-app feed, Download and Install and restart controls are then checked against this release.
 
 The application is not code signed. Integrity hashes are not publisher signature verification. Hosted Windows testing does not replace checking operation on the user's own PC or physical testing of printed parts.

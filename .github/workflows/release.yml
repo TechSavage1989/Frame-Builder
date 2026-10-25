@@ -37,8 +37,22 @@ jobs:
       - run: npm ci
       - run: node scripts/negative-control.cjs
       - run: npm run check
-      - name: Actual native model, export, focus and five-minute timer tests
-        run: npx electron scripts/native-integration.cjs
+      - name: Require green Windows CI for the exact release commit
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $passed=$false
+          for($i=0;$i -lt 100;$i++){
+            $runs=gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&per_page=10" | ConvertFrom-Json
+            $run=$runs.workflow_runs | Where-Object {$_.head_sha -eq '${{ github.sha }}'} | Select-Object -First 1
+            if($run -and $run.status -eq 'completed'){
+              if($run.conclusion -ne 'success'){throw 'Exact source CI did not pass'}
+              $passed=$true;break
+            }
+            Start-Sleep -Seconds 10
+          }
+          if(-not $passed){throw 'Timed out waiting for exact source Windows CI'}
       - run: npm run build:windows
       - name: Packaged visible-window and renderer-ready check
         shell: pwsh
