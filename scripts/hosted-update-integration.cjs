@@ -22,6 +22,7 @@ fs.mkdirSync(testRoot,{recursive:true});
 const target=path.join(testRoot,mode==='direct'?'User Named Främé.exe':'User Named Frame.exe');
 const shortcut=path.join(testRoot,'Frame Builder.lnk');
 const checks=[];
+let diagnosticJob=null,diagnosticOldPid=null;
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function waitFor(fn,label,ms=120000){
   const end=Date.now()+ms;
@@ -136,6 +137,7 @@ async function connect(port){
   const socket=new WebSocket(targetInfo.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true})});
   let serial=0;const pending=new Map();
+  socket.addEventListener('close',()=>{for(const p of pending.values())p.reject(Error('Debugger closed'));pending.clear()});
   socket.addEventListener('message',e=>{
     const m=JSON.parse(e.data);if(!m.id)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);
     if(m.error)p.reject(Error(JSON.stringify(m.error)));else p.resolve(m.result);
@@ -169,15 +171,21 @@ async function uiTest(oldRelease,newRelease){
   execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.resolve('scripts/confirm-install-dialog.ps1'),'-ProcessIdValue',String(old.receipt.pid)],{encoding:'utf8',windowsHide:true,timeout:45000,stdio:'inherit'});
   const jobFile=await waitFor(()=>fs.readdirSync(storage).find(n=>/^install-[a-f0-9]{24}\.json$/.test(n)),'actual app-created install job');
   const job=JSON.parse(fs.readFileSync(path.join(storage,jobFile),'utf8'));
-  client.socket.close();
-  const h=await waitFor(()=>{
+  diagnosticJob=job;diagnosticOldPid=old.receipt.pid;
+  const h=await waitFor(async()=>{
     const f=path.join(storage,'result-'+job.id+'.json');
     if(fs.existsSync(f)){
       const result=JSON.parse(fs.readFileSync(f,'utf8'));
       if(result.state!=='success')throw Error('Actual app installer failed: '+JSON.stringify(result));
     }
+    if(client.socket.readyState===1&&isRunning(old.receipt.pid)){
+      let state;
+      try{state=await Promise.race([ev('CanvasFrameDesktop.getUpdateStatus()'),delay(3000).then(()=>null)])}catch{}
+      if(state?.state==='install-error')throw Error('Actual app installation error: '+JSON.stringify(state));
+    }
     return receipt(path.join(storage,'health-'+job.id+'.txt'),job.healthToken,current)
   },'actual installed visible app');
+  client.socket.close();
   const result=await waitFor(()=>{try{return JSON.parse(fs.readFileSync(path.join(storage,'result-'+job.id+'.json'),'utf8'))}catch{return !fs.existsSync(path.join(storage,jobFile))&&!fs.existsSync(job.stage)&&isRunning(h.pid)?{state:'success',cleanupObserved:true}:null}},'actual installed result');
   assert.equal(result.state,'success',JSON.stringify(result));
   await waitCleanup(job);assert.equal(await hashFile(target),newRelease.info.asset.sha256);
@@ -232,8 +240,14 @@ async function uiTest(oldRelease,newRelease){
   assert(!fs.readdirSync(testRoot).some(n=>n.startsWith('.frame-builder-update-')));
   fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,platform:process.platform,mode,checks,passed:true},null,2));
   console.log(JSON.stringify(checks));
-})().catch(error=>{
-  fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,mode,checks,passed:false,error:error.stack},null,2));
+})().catch(async error=>{
+  let diagnostic=null;
+  if(diagnosticJob){
+    const j=diagnosticJob;
+    diagnostic={oldPidRunning:isRunning(diagnosticOldPid),stageExists:fs.existsSync(j.stage),targetHash:await hashFile(target),expectedNew:j.sha256,expectedOld:j.oldSha256,log:fs.existsSync(path.join(storage,'install.log'))?fs.readFileSync(path.join(storage,'install.log'),'utf8'):null};
+    console.error('Installer diagnostic:',JSON.stringify(diagnostic));
+  }
+  fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,mode,checks,passed:false,error:error.stack,diagnostic},null,2));
   if(error.stdout)console.error(String(error.stdout));
   if(error.stderr)console.error(String(error.stderr));
   console.error(error.stack);process.exit(1);
