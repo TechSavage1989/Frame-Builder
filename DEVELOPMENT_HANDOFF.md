@@ -1,5 +1,11 @@
 # Frame Builder development handoff
 
+## Active checkpoint 3.51.10 (2026-10-25)
+- 3.51.9 is an immutable prerelease at 7049e6e436e6562938588729566b01bdc795012e. Its native hosted install, lock wait, Unicode filename, cross-volume cleanup and interrupted-launch rollback passed in run 40180699416.
+- Actual UI download from 3.51.8 succeeded, but its legacy PowerShell helper exited before preparation. The old window and executable stayed unchanged. Do not call that update path successful.
+- 3.51.10 captures helper stdout/stderr in app-owned per-user logs, launches the explicit Windows PowerShell path, and requires full hosted testing from corrected 3.51.9. It remains a candidate until all release gates pass.
+- Earlier checkpoint notes below are historical and contain obsolete pending-release statements. Replace them with a verified final handoff after release validation.
+
 ## Final verification checkpoint (2026-10-25)
 - Corrected application source 7049e6e436e6562938588729566b01bdc795012e includes UTF-8 installer paths, .NET hashing and native PowerShell module precedence. App title now shows desktop 3.51.9.
 - The file-lock test driver must close the old window without waiting for the test's deliberately held lock. The helper itself waits for unlock; the driver releases its lock after checking that no replacement occurred. This is a test sequencing fix, not a change to application behavior.

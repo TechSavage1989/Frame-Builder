@@ -171,12 +171,13 @@ test('only committed app-owned transactions are cleaned after helper exit',async
   const jf=path.join(storage,'install-'+id+'.json'),rf=path.join(storage,'result-'+id+'.json');
   fs.writeFileSync(jf,JSON.stringify(job));
   fs.writeFileSync(path.join(storage,'my-export.stl'),'keep');
+  const helperLog=path.join(storage,'helper-'+id+'.log');fs.writeFileSync(helperLog,'installer output');
   fs.writeFileSync(rf,JSON.stringify({id,state:'success',helperPid:process.pid}));
   try{
-    assert.equal(await finishInstallJobs(storage),null);assert(fs.existsSync(stage));
+    assert.equal(await finishInstallJobs(storage),null);assert(fs.existsSync(stage));assert(fs.existsSync(helperLog));
     fs.writeFileSync(rf,JSON.stringify({id,state:'success',helperPid:-1}));
     assert.equal((await finishInstallJobs(storage)).state,'installed');
-    assert(!fs.existsSync(stage));assert(!fs.existsSync(payload));assert(!fs.existsSync(jf));
+    assert(!fs.existsSync(stage));assert(!fs.existsSync(payload));assert(!fs.existsSync(jf));assert(!fs.existsSync(helperLog));
     assert.equal(fs.readFileSync(path.join(storage,'rollback.exe'),'utf8'),'old');
     assert.equal(fs.readFileSync(path.join(storage,'my-export.stl'),'utf8'),'keep');
     assert.equal(fs.readFileSync(target,'utf8'),'new');

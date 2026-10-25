@@ -56,7 +56,7 @@ async function downloadUpdate() {
   })();
   return downloadPromise;
 }
-async function waitForHelper(file, id, child, resultFile) {
+async function waitForHelper(file, id, child, resultFile, helperLog) {
   const until = Date.now() + 45000;
   let spawnError;
   child.once('error', error => { spawnError = error; });
@@ -70,7 +70,10 @@ async function waitForHelper(file, id, child, resultFile) {
       const ready = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (ready.id === id && ready.helperPid === child.pid) return;
     }
-    if (child.exitCode !== null) throw Error('Installer exited before preparation completed');
+    if (child.exitCode !== null) {
+      const detail = fs.existsSync(helperLog) ? fs.readFileSync(helperLog, 'utf8').trim().slice(-2000) : '';
+      throw Error('Windows installer exited before preparation completed.' + (detail ? ' ' + detail : ' See the updater log in application settings storage.'));
+    }
     await new Promise(resolve => setTimeout(resolve, 200));
   }
   throw Error('Installer preparation timed out. Frame Builder remains open.');
@@ -102,11 +105,17 @@ async function installUpdate() {
       const log = path.join(folder, 'install.log');
       if (fs.existsSync(log) && fs.statSync(log).size > 1000000) fs.writeFileSync(log, '');
       fs.writeFileSync(jobFile, JSON.stringify(job), { mode: 0o600, flag: 'wx' });
-      fs.copyFileSync(path.join(__dirname, 'update-install.ps1'), helper, fs.constants.COPYFILE_EXCL);
-      const child = spawn('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', helper, '-JobFile', jobFile],
-        { detached: true, stdio: 'ignore', windowsHide: true });
+      fs.writeFileSync(helper, fs.readFileSync(path.join(__dirname, 'update-install.ps1')), { mode: 0o600, flag: 'wx' });
+      const helperLog = path.join(folder, 'helper-' + id + '.log');
+      const logFd = fs.openSync(helperLog, 'wx', 0o600);
+      let child;
+      try {
+        child = spawn(path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+          ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', helper, '-JobFile', jobFile],
+          { detached: true, stdio: ['ignore', logFd, logFd], windowsHide: true });
+      } finally { fs.closeSync(logFd); }
       child.unref();
-      await waitForHelper(path.join(folder, 'ready-' + id + '.json'), id, child, path.join(folder, 'result-' + id + '.json'));
+      await waitForHelper(path.join(folder, 'ready-' + id + '.json'), id, child, path.join(folder, 'result-' + id + '.json'), helperLog);
       if (await operationBusy()) throw Error('A model or export started during preparation. Finish it before restarting.');
       app.quit();
       return true;
