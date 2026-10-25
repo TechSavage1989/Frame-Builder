@@ -32,8 +32,16 @@ jobs:
           $old=gh release list --repo '${{ github.repository }}' --json tagName | ConvertFrom-Json
           $published=@($old | Where-Object {$_.tagName -eq "v$v"}).Count -gt 0
           if($published){
-            git fetch origin "refs/tags/v$v:refs/tags/v$v"
-            $releaseCommit=git rev-list -n 1 "v$v"
+            $tagObject=gh api "repos/${{ github.repository }}/git/ref/tags/v$v" | ConvertFrom-Json
+            if($LASTEXITCODE -ne 0){throw 'Unable to resolve immutable release tag'}
+            while($tagObject.object.type -eq 'tag'){
+              $tagObject=gh api "repos/${{ github.repository }}/git/tags/$($tagObject.object.sha)" | ConvertFrom-Json
+              if($LASTEXITCODE -ne 0){throw 'Unable to resolve annotated tag'}
+            }
+            $releaseCommit=[string]$tagObject.object.sha
+            if($tagObject.object.type -ne 'commit' -or $releaseCommit -notmatch '^[a-f0-9]{40}$'){throw 'Invalid release source commit'}
+            git fetch --depth=1 origin $releaseCommit
+            if($LASTEXITCODE -ne 0){throw 'Unable to fetch immutable release source'}
             git diff --exit-code $releaseCommit HEAD -- app assets browser cad_source package.json package-lock.json scripts/sync-builder.cjs Build_Windows.cmd
             if($LASTEXITCODE -ne 0){throw 'Published application differs; increment the version instead of replacing assets'}
             'EXISTING_RELEASE=true'|Out-File $env:GITHUB_ENV -Append -Encoding utf8
@@ -55,8 +63,8 @@ jobs:
         run: |
           $passed=$false
           for($i=0;$i -lt 100;$i++){
-            $runs=gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&per_page=10" | ConvertFrom-Json
-            $run=$runs.workflow_runs | Where-Object {$_.head_sha -eq '${{ github.sha }}'} | Select-Object -First 1
+            $runs=gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=$env:RELEASE_SOURCE_COMMIT&per_page=10" | ConvertFrom-Json
+            $run=$runs.workflow_runs | Where-Object {$_.head_sha -eq $env:RELEASE_SOURCE_COMMIT} | Select-Object -First 1
             if($run -and $run.status -eq 'completed'){
               if($run.conclusion -ne 'success'){throw 'Exact source CI did not pass'}
               $passed=$true;break
@@ -116,7 +124,8 @@ jobs:
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
           $tag=gh api "repos/${{ github.repository }}/git/ref/tags/v$v" | ConvertFrom-Json
-          if($tag.object.sha -ne $env:RELEASE_SOURCE_COMMIT){throw 'Release tag differs from tested commit'}
+          while($tag.object.type -eq 'tag'){$tag=gh api "repos/${{ github.repository }}/git/tags/$($tag.object.sha)"|ConvertFrom-Json}
+          if($tag.object.type -ne 'commit' -or $tag.object.sha -ne $env:RELEASE_SOURCE_COMMIT){throw 'Release tag differs from tested commit'}
           New-Item -ItemType Directory -Force -Path dist/hosted-check | Out-Null
           gh release download "v$v" --repo '${{ github.repository }}' --dir dist/hosted-check
           foreach($name in @("Frame_Builder_${v}_Windows_x64.exe","Frame_Builder_${v}_Windows_x64.zip",'update-manifest.json','SHA256SUMS.txt')){
@@ -125,8 +134,9 @@ jobs:
           }
           $manifest=Get-Content dist/update-manifest.json -Raw|ConvertFrom-Json
           foreach($line in Get-Content dist/SHA256SUMS.txt){
-            if($line -notmatch '^([a-f0-9]{64})  ([A-Za-z0-9_.-]+)$'){throw 'Unsafe checksum entry'}
-            if((Get-FileHash -LiteralPath (Join-Path 'dist' $Matches[2]) -Algorithm SHA256).Hash -ine $Matches[1]){throw 'Published checksum mismatch'}
+            $record=[regex]::Match($line,'^([a-f0-9]{64})  ([A-Za-z0-9_.-]+)$')
+            if(-not $record.Success){throw 'Unsafe checksum entry'}
+            if((Get-FileHash -LiteralPath (Join-Path 'dist' $record.Groups[2].Value) -Algorithm SHA256).Hash -ine $record.Groups[1].Value){throw 'Published checksum mismatch'}
           }
           if((Get-FileHash -LiteralPath "dist/Frame_Builder_${v}_Windows_x64.exe").Hash -ine $manifest.asset.sha256){throw 'Manifest executable hash mismatch'}
           Add-Type -AssemblyName System.IO.Compression.FileSystem
