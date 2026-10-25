@@ -8,6 +8,7 @@ if (files.length !== 1) throw new Error('Keep one standalone builder HTML in the
 const original = fs.readFileSync(path.join(folder, files[0]), 'utf8');
 const csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
 const desktop = original.replace(/<title>[^<]*<\/title>/, '<title>Frame Builder ' + require('../package.json').version + '</title>').replace('<head>', '<head>\n<meta http-equiv="Content-Security-Policy" content="' + csp + '">')
+  .replace('<h1>Frame &amp; panel builder</h1>', '<h1>Frame &amp; panel builder</h1><span id="desktopVersion" class="bedtag" aria-label="Installed desktop version">v' + require('../package.json').version + '</span>')
   .replace('Files prepared. Check your browser downloads.', 'Choose where to save the exported file.')
   .replace('The browser blocked the viewer window. Allow pop-ups for this file, then select Detach again.', 'The separate viewer could not open. Select Detach to try again.')
   .replace('</body>', '<script src="desktop-ui.js"></script>\n</body>');

@@ -1,5 +1,12 @@
 # Frame Builder development handoff
 
+## Pending 3.51.15 updater test
+
+- Owner requested a small visible change and publication to test the updater from 3.51.14.
+- Candidate 3.51.15 adds an installed-version label beside the builder title, generated from package.json by scripts/sync-builder.cjs. The native window suite verifies the label.
+- release-validation.json targets previousVersion 3.51.14 and requires fresh native installation and actual UI migration checks. No earlier installer run is reused.
+- CAD/browser source, updater behavior, dependencies and settings remain unchanged. Do not call this candidate validated until hosted CI and the release workflow pass.
+
 ## Current verified state (2026-10-25)
 
 - Latest desktop release: Frame Builder 3.51.14, tag v3.51.14.

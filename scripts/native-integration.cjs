@@ -26,6 +26,7 @@ async function run(win){
   const evaluate=code=>win.webContents.executeJavaScript(code,true);
   await waitFor(()=>evaluate("Boolean(window.CanvasFrameViewer && CanvasFrameViewer.getState().status==='ready')"),'initial preview');
   assert(win.isVisible());assert.equal(await evaluate('typeof require'),'undefined');
+  assert.equal(await evaluate("document.getElementById('desktopVersion').textContent"),'v'+require('../package.json').version);
   console.log('Native progress:',new Date().toISOString());checks.push({name:'visible responsive isolated window',passed:true});
   const updater=controller.getUpdater();
   let now=Date.now();
