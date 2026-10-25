@@ -109,7 +109,7 @@ test('desktop exports use the native chooser and report completion or cancellati
   assert.equal(window.sent.at(-1).value.state, 'completed');
   assert.equal(window.sent.at(-1).value.filename, 'Frame_Joint_Test.3mf');
   const cancelled = download('Frame.step', '');
-  assert.equal(cancelled.options.defaultPath, '/chosen/Frame.step');
+  assert.equal(cancelled.options.defaultPath, path.join('/chosen', 'Frame.step'));
   cancelled.emit('done', {}, 'cancelled');
   assert.equal(window.sent.at(-1).value.state, 'cancelled');
 });
