@@ -245,6 +245,16 @@ async function uiTest(oldRelease,newRelease){
   if(diagnosticJob){
     const j=diagnosticJob;
     diagnostic={oldPidRunning:isRunning(diagnosticOldPid),stageExists:fs.existsSync(j.stage),targetHash:await hashFile(target),expectedNew:j.sha256,expectedOld:j.oldSha256,log:fs.existsSync(path.join(storage,'install.log'))?fs.readFileSync(path.join(storage,'install.log'),'utf8'):null};
+    const helper=path.join(storage,'helper-'+j.id+'.ps1');
+    diagnostic.helperExists=fs.existsSync(helper);
+    if(diagnostic.helperExists){
+      const bytes=fs.readFileSync(helper);
+      diagnostic.helperBytes=bytes.length;diagnostic.helperPrefix=bytes.subarray(0,160).toString('utf8');
+      diagnostic.helperSha256=crypto.createHash('sha256').update(bytes).digest('hex');
+      fs.writeFileSync(path.join(storage,'abort-'+j.id),'');
+      try{execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',helper,'-JobFile',path.join(storage,'install-'+j.id+'.json')],{encoding:'utf8',windowsHide:true,timeout:15000})}
+      catch(probe){diagnostic.manualHelperStdout=String(probe.stdout||'');diagnostic.manualHelperStderr=String(probe.stderr||'');diagnostic.manualHelperStatus=probe.status}
+    }
     console.error('Installer diagnostic:',JSON.stringify(diagnostic));
   }
   fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,mode,checks,passed:false,error:error.stack,diagnostic},null,2));
