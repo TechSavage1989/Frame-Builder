@@ -1,5 +1,6 @@
 name: Windows Release
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*.*.*'
@@ -14,11 +15,12 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Verify release tag against package
+      - name: Verify release version and source
         shell: pwsh
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
-          if ('v'+$v -ne '${{ github.ref_name }}') { throw 'Tag does not match package version' }
+          if ('${{ github.event_name }}' -eq 'push' -and "v$v" -ne '${{ github.ref_name }}') { throw 'Tag does not match package version' }
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ github.ref_name }}' -ne 'main') { throw 'Run manual releases from main' }
       - run: npm ci
       - run: node scripts/negative-control.cjs
       - run: node scripts/sync-builder.cjs
@@ -36,25 +38,48 @@ jobs:
           if (-not $exe) { throw 'Missing release EXE' }
           if ($exe.VersionInfo.ProductName -notlike '*Frame Builder*') { throw 'Wrong executable identity' }
           if ($exe.Length -lt 1000000) { throw 'Unexpected executable size' }
-      - name: Prepare release metadata
+      - name: Prepare release manifest and checksum
         shell: pwsh
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: node scripts/generate-update-manifest.cjs
-      - name: Stage immutable release assets
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          $env:RELEASE_TAG="v$v"
+          node scripts/generate-update-manifest.cjs
+      - name: Publish immutable pre-release assets
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
           $exe="dist/Frame_Builder_${v}_Windows_x64.exe"
-          gh release create "v$v" "$exe" dist/update-manifest.json dist/SHA256SUMS.txt --repo "${{ github.repository }}" --title "Frame Builder v$v" --notes 'Windows portable update with SHA-256 verification and rollback.' --verify-tag
-      - name: Verify live release assets
+          $args=@('release','create',"v$v",$exe,'dist/update-manifest.json','dist/SHA256SUMS.txt',
+            '--repo','${{ github.repository }}','--title',"Frame Builder v$v",
+            '--notes','Windows portable pre-release for validation. Confirm frame exports and the complete updater workflow before promoting to a stable release.',
+            '--prerelease')
+          if ('${{ github.event_name }}' -eq 'push') {
+            $args+='--verify-tag'
+          } else {
+            $existing=git ls-remote --tags origin "refs/tags/v$v"
+            if ($LASTEXITCODE -ne 0) { throw 'Unable to check existing release tags' }
+            if ($existing) { throw 'Release tag already exists; refusing to overwrite' }
+            $args+=@('--target','${{ github.sha }}')
+          }
+          gh @args
+      - name: Verify downloadable release assets and exact digest
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $v=(Get-Content package.json | ConvertFrom-Json).version
-          $json=gh release view "v$v" --repo "${{ github.repository }}" --json assets,tagName | ConvertFrom-Json
+          $name="Frame_Builder_${v}_Windows_x64.exe"
+          $json=gh release view "v$v" --repo '${{ github.repository }}' --json assets,tagName,isPrerelease | ConvertFrom-Json
+          if (-not $json.isPrerelease) { throw 'Initial release must remain a pre-release until native update testing' }
           $names=@($json.assets | ForEach-Object { $_.name })
-          foreach($need in @("Frame_Builder_${v}_Windows_x64.exe",'update-manifest.json','SHA256SUMS.txt')){if($names -notcontains $need){throw "Missing hosted asset: $need"}}
+          foreach($need in @($name,'update-manifest.json','SHA256SUMS.txt')) {
+            if($names -notcontains $need){throw "Missing hosted asset: $need"}
+          }
+          New-Item -ItemType Directory -Force -Path dist/hosted-check | Out-Null
+          gh release download "v$v" --repo '${{ github.repository }}' --pattern $name --dir dist/hosted-check
+          $source=(Get-FileHash -LiteralPath "dist/$name" -Algorithm SHA256).Hash
+          $hosted=(Get-FileHash -LiteralPath "dist/hosted-check/$name" -Algorithm SHA256).Hash
+          if($source -ne $hosted){throw 'Hosted EXE digest differs from verified local artifact'}
+          Write-Host "Hosted release verified: v$v / $hosted"
