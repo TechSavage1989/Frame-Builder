@@ -254,6 +254,11 @@ async function uiTest(oldRelease,newRelease){
       fs.writeFileSync(path.join(storage,'abort-'+j.id),'');
       try{execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',helper,'-JobFile',path.join(storage,'install-'+j.id+'.json')],{encoding:'utf8',windowsHide:true,timeout:15000})}
       catch(probe){diagnostic.manualHelperStdout=String(probe.stdout||'');diagnostic.manualHelperStderr=String(probe.stderr||'');diagnostic.manualHelperStatus=probe.status}
+      const nativePowerShell=path.join(process.env.SystemRoot,'System32','WindowsPowerShell','v1.0','powershell.exe');
+      const environment={...process.env,FRAME_PROBE_HELPER:helper,FRAME_PROBE_JOB:path.join(storage,'install-'+j.id+'.json')};
+      const command="[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);$ErrorActionPreference='Continue';Write-Output ('PowerShell '+$PSVersionTable.PSVersion);Write-Output ('Job exists: '+[IO.File]::Exists($env:FRAME_PROBE_JOB));Write-Output ([IO.File]::ReadAllText($env:FRAME_PROBE_JOB) -replace '\"healthToken\":\"[a-f0-9]+\"','\"healthToken\":\"redacted\"');$tokens=$null;$errs=$null;[System.Management.Automation.Language.Parser]::ParseFile($env:FRAME_PROBE_HELPER,[ref]$tokens,[ref]$errs)|Out-Null;$errs|ForEach-Object {Write-Output $_};Set-PSDebug -Trace 1;& $env:FRAME_PROBE_HELPER -JobFile $env:FRAME_PROBE_JOB";
+      try{diagnostic.tracedHelperStdout=execFileSync(nativePowerShell,['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',command],{encoding:'utf8',env:environment,windowsHide:true,timeout:20000})}
+      catch(probe){diagnostic.tracedHelperStdout=String(probe.stdout||'');diagnostic.tracedHelperStderr=String(probe.stderr||'');diagnostic.tracedHelperStatus=probe.status}
     }
     console.error('Installer diagnostic:',JSON.stringify(diagnostic));
   }
