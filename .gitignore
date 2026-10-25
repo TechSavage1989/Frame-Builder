@@ -1,0 +1,7 @@
+node_modules/
+dist/
+validation/runtime/
+*.log
+*.tmp
+*.pending
+.env

@@ -1,0 +1,52 @@
+{
+  "name": "canvas-frame-builder",
+  "version": "3.51.7",
+  "private": true,
+  "description": "Offline frame and UV panel designer with STL, STEP and 3MF exports.",
+  "author": "TechSavage3D",
+  "license": "UNLICENSED",
+  "main": "app/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --test scripts/desktop.test.cjs scripts/update.test.cjs",
+    "build:windows": "node scripts/sync-builder.cjs && npm run check && electron-builder --win portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.techsavage3d.canvasframe",
+    "productName": "Frame Builder",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "app/**/*",
+      "assets/icon.png",
+      "assets/icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "signExecutable": false
+    },
+    "portable": {
+      "artifactName": "Frame_Builder_${version}_Windows_${arch}.exe",
+      "requestExecutionLevel": "user"
+    },
+    "publish": null
+  }
+}

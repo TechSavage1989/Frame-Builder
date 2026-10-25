@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const pkg=require('../package.json');const tag=process.env.RELEASE_TAG||'';
+if(tag!==`v${pkg.version}`||!/\d+\.\d+\.\d+/.test(pkg.version))throw Error('Release tag must exactly match package version');
+const name=`Frame_Builder_${pkg.version}_Windows_x64.exe`;
+const dest=path.resolve(__dirname,'../dist',name);
+if(!fs.existsSync(dest))throw Error('Windows portable EXE missing: '+dest);
+const bytes=fs.readFileSync(dest);
+if(bytes.length<1_000_000)throw Error('Unexpected small executable');
+const url=`https://github.com/TechSavage1989/Frame-Builder/releases/download/${tag}/${name}`;
+const manifest={appId:'com.techsavage3d.canvasframe',product:'Frame Builder',version:pkg.version,asset:{name,kind:'windows-portable-exe',url,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),size:bytes.length},notes:['Update-check banner and verified portable update staging','Native focus and five-minute background checks','Preserves original 3.51.6 frame generation'],readMore:`https://github.com/TechSavage1989/Frame-Builder/releases/tag/${tag}`};
+fs.writeFileSync(path.join(path.dirname(dest),'update-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+fs.writeFileSync(path.join(path.dirname(dest),'SHA256SUMS.txt'),manifest.asset.sha256+'  '+name+'\n');
+console.log('Release manifest: '+name+' '+manifest.asset.sha256);

@@ -1,0 +1,10 @@
+CANVAS FRAME BUILDER 3.51.6 SOURCE
+The standalone HTML and portable Windows folder are supplied already built.
+Build browser: python build_html.py
+Optional local print export: node export_models.cjs Parameters.json output_folder
+Regenerate shipped examples: node build_release.cjs
+Use the same companion source files. Reserved-area geometry checks require bed_safety.js.
+Individual STEP/STL parts do not store protected bed placement. Use arranged 3MFs.
+See ../USER_GUIDE.html for new controls and the Fusion workflow distinction.
+
+Front Snap Borderless: frameSpringsEnabled true/false changes the rear perimeter spring cutouts only; the default is true. Compare Fit_Tests/Rear_Frame_Spring_Comparison.

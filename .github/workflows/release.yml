@@ -1,0 +1,60 @@
+name: Windows Release
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify release tag against package
+        shell: pwsh
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          if ('v'+$v -ne '${{ github.ref_name }}') { throw 'Tag does not match package version' }
+      - run: npm ci
+      - run: node scripts/negative-control.cjs
+      - run: node scripts/sync-builder.cjs
+      - run: node --test scripts/desktop.test.cjs scripts/update.test.cjs
+      - run: npm run build:windows
+      - name: Native packaged-window smoke test
+        shell: pwsh
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          ./scripts/windows-smoke.ps1 -Exe "dist/Frame_Builder_${v}_Windows_x64.exe" -ExpectedVersion $v
+      - name: Verify portable executable metadata
+        shell: pwsh
+        run: |
+          $exe=Get-ChildItem dist -Filter 'Frame_Builder_*_Windows_x64.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'Missing release EXE' }
+          if ($exe.VersionInfo.ProductName -notlike '*Frame Builder*') { throw 'Wrong executable identity' }
+          if ($exe.Length -lt 1000000) { throw 'Unexpected executable size' }
+      - name: Prepare release metadata
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/generate-update-manifest.cjs
+      - name: Stage immutable release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          $exe="dist/Frame_Builder_${v}_Windows_x64.exe"
+          gh release create "v$v" "$exe" dist/update-manifest.json dist/SHA256SUMS.txt --repo "${{ github.repository }}" --title "Frame Builder v$v" --notes 'Windows portable update with SHA-256 verification and rollback.' --verify-tag
+      - name: Verify live release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v=(Get-Content package.json | ConvertFrom-Json).version
+          $json=gh release view "v$v" --repo "${{ github.repository }}" --json assets,tagName | ConvertFrom-Json
+          $names=@($json.assets | ForEach-Object { $_.name })
+          foreach($need in @("Frame_Builder_${v}_Windows_x64.exe",'update-manifest.json','SHA256SUMS.txt')){if($names -notcontains $need){throw "Missing hosted asset: $need"}}
