@@ -1,11 +1,19 @@
-# Frame Builder 3.51.11 development preview
+# Frame Builder 3.51.12
 
-Corrects Windows PowerShell launch from the packaged desktop app. The helper runs as a normal Windows child process, with captured per-user logs, and remains alive when the old application exits. Detached launches failed before loading their script; the native negative control and corrected launch were reproduced in run 40184288439.
+Adds a reliable Windows portable desktop updater while preserving the Canvas Frame Builder 3.51.6 CAD design.
 
-This is an intentional update-capable development preview, not a stable feed entry. It enables a genuine previous-version-to-next-release UI test for the following release. Older 3.51.7 through 3.51.10 previews can fail safely before update preparation; install this ZIP manually for testing.
+- Checks at startup, every five minutes while online, and on focus return after two minutes without a check.
+- Uses persistent validated cache/ETags, single-flight requests, manual cooldowns and server backoff.
+- Downloads and installs only on request, with progress, short release notes and clear errors. Active models and exports prevent restart.
+- Validates the trusted repository, release, asset filename, size, SHA-256, Windows PE format and exact product/version metadata.
+- Runs the Windows PowerShell helper as a normal child process. A native negative control reproduced the old detached-process failure before the script loaded.
+- Stages on the destination filesystem and requires a responsive visible new app window. Failed launches restore and restart the previous executable.
+- Preserves per-user settings, window size, existing custom executable names and shortcut targets. Supports accented filenames and cross-volume staging. Keeps one rollback backup and cleans app-owned transaction files after health confirmation and helper exit.
 
-Preserves the complete Canvas Frame Builder 3.51.6 CAD design and all four styles, reinforced UV-panel joints, optional frame springs, stands, preview, saved preferences and STL/STEP/3MF exports.
+Download the Windows ZIP, extract it, and run Frame Builder.exe. Original 3.51.6 users need that first manual install because the original app has no updater. Replace development previews 3.51.7 through 3.51.10 manually if their updater cannot prepare. 3.51.11 is the corrected update-capable preview used for the actual previous-to-new release test.
 
-The updater checks at startup, every five minutes while online and on focus return after two minutes. Downloads and installation require user action. It validates repository, version, size, SHA-256, Windows PE/product metadata, stages on the destination filesystem and requires a visible responsive new window. Failed launches restore and restart the previous executable. One rollback executable is retained after the helper exits.
+All four frame styles, reinforced UV-panel joints, optional frame springs, centered braces/mounts, established stands and STL/STEP/3MF exports retain the accepted 3.51.6 geometry. Fusion Builder is separate.
 
-Not code signed. Hash verification does not establish publisher signing. Hosted Windows tests do not replace checks on the user's own PC or physical print/fit tests.
+The release workflow checks exact hosted source/tag/assets/hashes, native file locking, visible relaunch, interrupted-launch rollback and actual 3.51.11 in-app download/install/restart with settings and shortcut preservation. Stable delivery requires all gates to pass.
+
+The app is not code signed. SHA-256 verifies integrity against the trusted release manifest, not publisher signing. Hosted Windows checks do not replace testing on the user's own PC or physical print/fit/load tests. Offline and throttling tests inject request failures; a live shared-IP API limit or OS-wide disconnect is not forced.
