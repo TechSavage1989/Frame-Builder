@@ -57,7 +57,7 @@ test('the complete offline builder is packaged with the desktop app', () => {
 });
 
 test('all desktop JavaScript parses', () => {
-  for (const name of ['main.cjs', 'preload.cjs', 'desktop-policy.cjs', 'desktop-ui.js', 'update-core.cjs', 'update-check.cjs', 'update-download.cjs']) {
+  for (const name of ['main.cjs', 'preload.cjs', 'desktop-policy.cjs', 'desktop-ui.js', 'update-core.cjs', 'update-check.cjs', 'update-download.cjs', 'update-scheduler.cjs', 'update-windows.cjs', 'update-housekeeping.cjs']) {
     new vm.Script(fs.readFileSync(path.join(root, 'app', name), 'utf8'), { filename: name });
   }
 });
@@ -68,7 +68,7 @@ test('desktop exports use the native chooser and report completion or cancellati
   session.setPermissionCheckHandler = handler => { session.check = handler; };
   session.webRequest = { onBeforeRequest(filter, handler) { session.network = { filter, handler }; } };
   const app = Object.assign(new EventEmitter(), { setName() {}, setPath() {}, setAppUserModelId() {},
-    whenReady: () => Promise.resolve(), getPath: () => '/test/Downloads', getVersion: () => '3.51.7', isPackaged:false, quit() {} });
+    whenReady: () => Promise.resolve(), requestSingleInstanceLock:()=>true, getPath: () => '/test/Downloads', getVersion: () => '3.51.7', isPackaged:false, quit() {} });
   const windows = [];
   class Window extends EventEmitter {
     constructor(options) {
@@ -86,8 +86,8 @@ test('desktop exports use the native chooser and report completion or cancellati
   }
   const electron = { ipcMain:{handle(){}}, app, BrowserWindow: Window, session: { defaultSession: session },
     Menu: { buildFromTemplate: x => x, setApplicationMenu() {} }, dialog: { showErrorBox() {} } };
-  const context = { setInterval:()=>0,clearInterval:()=>{}, __dirname: path.join(root, 'app'), process: { platform: 'win32' },
-    require: id => id === 'electron' ? electron : id.startsWith('./') ? require(path.join(root,'app',id)) : require(id) };
+  const context = { module:{exports:{}}, setInterval:()=>0,clearInterval:()=>{}, __dirname: path.join(root, 'app'), process: { platform: 'win32' },
+    require: id => id === 'electron' ? electron : id === './update-housekeeping.cjs' ? {finishInstallJobs:async()=>null} : id.startsWith('./') ? require(path.join(root,'app',id)) : require(id) };
   vm.runInNewContext(fs.readFileSync(path.join(root, 'app/main.cjs'), 'utf8'), context);
   await new Promise(resolve => setImmediate(resolve));
   const window = windows[0];

@@ -2,6 +2,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 const updateAPI={
+ getUpdateStatus:()=>ipcRenderer.invoke('frame:get-update-status'),
  checkUpdate:()=>ipcRenderer.invoke('frame:check-update'),
  downloadUpdate:()=>ipcRenderer.invoke('frame:download-update'),
  installUpdate:()=>ipcRenderer.invoke('frame:install-update'),
@@ -10,6 +11,7 @@ const updateAPI={
 };
 
 contextBridge.exposeInMainWorld('CanvasFrameDesktop', Object.freeze({
+  getUpdateStatus: updateAPI.getUpdateStatus,
   checkUpdate: updateAPI.checkUpdate,
   downloadUpdate: updateAPI.downloadUpdate,
   installUpdate: updateAPI.installUpdate,

@@ -1,6 +1,16 @@
 # Frame Builder development handoff
 
-## Current verified state (2026-10-25)
+## Updater audit in progress (2026-10-25)
+- Unpublished 3.51.7 candidate now preserves validated ETags across errors and process restarts, persists rate-limit backoff, runs main-process checks even while unfocused, and binds the two-minute focus policy to the actual window.
+- Downloads and installs are single-flight. Windows PE, exact release filename/version, product metadata, byte length and SHA-256 are checked. Portable NSIS launchers may be x86 containers carrying the x64 application.
+- Installer now supports Windows PowerShell 5.1, validates/stages before the old window closes, uses same-volume File.Replace, and requires a responsive visible new window plus ready CAD preview. It restarts/restores the previous executable on failures.
+- Transaction cleanup waits for helper exit. One rollback EXE remains under per-user updates; transient staging beside the target is removed only after verified success/rollback. Custom executable names and shortcuts keep their target.
+- CAD source and standalone browser 3.51.6 are unchanged. No rejected Borderless fold-flat design was imported.
+- 22 local source tests pass, including a negative control for the candidate's ETag-after-error failure. Actual production two/five-minute window timer and all-style preview/export checks are implemented in scripts/native-integration.cjs and must pass on hosted Windows before release.
+- Local Linux Electron cannot create a usable display in this environment. Do not count that as a Windows failure or a successful native test.
+- No release has yet been published. Continue native CI and complete two-version update/rollback validation before marking the candidate ready.
+
+## Prior verified state (2026-10-25)
 - Canonical repository: https://github.com/TechSavage1989/Frame-Builder, public, default branch main. Owner explicitly authorized public source and binaries.
 - Last accepted COMPLETE Windows baseline: **Canvas Frame Builder 3.51.6**.
 - Current updater source candidate: **3.51.7**. Do not confuse a built candidate with a fully tested updater release.

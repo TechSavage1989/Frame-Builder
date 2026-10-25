@@ -1,128 +1,162 @@
-# User-initiated, post-exit portable Windows installer. Runs outside the Electron app.
-# The only removable files are installer-owned .frame-update-stage/.failed-update,
-# the downloaded payload, and the one previous-version rollback executable.
-param(
- [Parameter(Mandatory=$true)][string]$Target,
- [Parameter(Mandatory=$true)][string]$Payload,
- [Parameter(Mandatory=$true)][string]$Sha256,
- [Parameter(Mandatory=$true)][string]$ExpectedVersion,
- [Parameter(Mandatory=$true)][string]$OldSha256,
- [Parameter(Mandatory=$true)][string]$HealthFile,
- [Parameter(Mandatory=$true)][string]$HealthToken,
- [Parameter(Mandatory=$true)][int]$ParentPid,
- [Parameter(Mandatory=$true)][string]$LogFile
-)
-$ErrorActionPreference = 'Stop'
-function Log([string]$message) {
-  Add-Content -LiteralPath $LogFile -Value ((Get-Date).ToString('o') + ' ' + $message)
+# User-initiated portable Windows update transaction. Compatible with Windows PowerShell 5.1.
+param([Parameter(Mandatory=$true)][string]$JobFile)
+$ErrorActionPreference='Stop'
+$job=$null; $swapped=$false; $child=$null; $owned=@{}; $parentExited=$false
+function Write-Json([string]$file, $value) {
+  $temp=$file+'.tmp'
+  [IO.File]::WriteAllText($temp, ($value | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding($false)))
+  Move-Item -LiteralPath $temp -Destination $file -Force
 }
-function HashOK([string]$p, [string]$expected) {
-  if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return $false }
-  return (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash -ieq $expected
+function Log([string]$text) {
+  if($null -ne $job) { Add-Content -LiteralPath (Join-Path $job.storage 'install.log') -Value ((Get-Date).ToString('o')+' '+$text) }
 }
-function Wait-ExecutableUnlocked([string]$p, [int]$seconds) {
-  for ($i=0; $i -lt $seconds; $i++) {
-    try {
-      $file = [System.IO.File]::Open($p, 'Open', 'ReadWrite', 'None')
-      $file.Dispose()
-      return
-    } catch [System.IO.IOException] {
-      Start-Sleep -Seconds 1
-    }
-  }
-  throw 'Previous portable executable is still locked'
+function HashOK([string]$file,[string]$hash) {
+  return (Test-Path -LiteralPath $file -PathType Leaf) -and ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ieq $hash)
 }
-$stage = $Target + '.frame-update-stage'
-$backup = $Target + '.previous'
-$failed = $Target + '.failed-update'
-$swapped = $false
-$child = $null
-try {
-  Log 'Starting Frame Builder portable install helper'
-  foreach ($p in @($Target, $Payload, $HealthFile, $LogFile)) {
-    if (-not [System.IO.Path]::IsPathFullyQualified($p)) { throw 'Installer paths must be absolute' }
+function Assert-Absolute([string]$file) {
+  if($file -notmatch '^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+\\)' -or [IO.Path]::GetFullPath($file) -ine $file) { throw 'Installer paths must be canonical absolute Windows paths' }
+}
+function Assert-PE([string]$file) {
+  $stream=[IO.File]::OpenRead($file)
+  try {
+    $r=New-Object IO.BinaryReader($stream)
+    if($r.ReadUInt16() -ne 0x5A4D){throw 'Update is not a PE executable'}
+    $stream.Position=60; $offset=$r.ReadUInt32()
+    if($offset -lt 64 -or $offset+24 -gt $stream.Length){throw 'Invalid PE offset'}
+    $stream.Position=$offset
+    if($r.ReadUInt32() -ne 0x4550){throw 'Invalid PE signature'}
+    if($r.ReadUInt16() -notin @(0x8664,0x14c)){throw 'Invalid PE architecture'}
+    $stream.Position=$offset+22
+    if(($r.ReadUInt16() -band 0x2000) -ne 0){throw 'DLL payload rejected'}
+  } finally {$stream.Dispose()}
+}
+function Wait-Unlocked([string]$file) {
+  for($i=0;$i -lt 60;$i++){
+    try {$s=[IO.File]::Open($file,'Open','ReadWrite','None');$s.Dispose();return}
+    catch [IO.IOException] {Start-Sleep -Seconds 1}
   }
-  if ($ExpectedVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid intended version' }
-  if ($Sha256 -notmatch '^[a-fA-F0-9]{64}$' -or $OldSha256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'Invalid digest' }
-  if (-not (Test-Path -LiteralPath $Target -PathType Leaf)) { throw 'Existing executable is missing' }
-  if (-not (HashOK $Payload $Sha256)) { throw 'Downloaded update digest mismatch' }
-  $info = (Get-Item -LiteralPath $Payload).VersionInfo
-  if ($info.ProductName -notlike '*Frame Builder*') { throw ('Wrong executable product: ' + $info.ProductName) }
-  if ($info.ProductVersion -notmatch ('^' + [regex]::Escape($ExpectedVersion) + '(?:$|\.)')) {
-    throw ('Wrong executable version: ' + $info.ProductVersion)
-  }
-  for ($i=0; $i -lt 120; $i++) {
-    if (-not (Get-Process -Id $ParentPid -ErrorAction SilentlyContinue)) { break }
-    Start-Sleep -Seconds 1
-  }
-  if (Get-Process -Id $ParentPid -ErrorAction SilentlyContinue) { throw 'Previous app has not closed' }
-  Wait-ExecutableUnlocked $Target 60
-  if (-not (HashOK $Target $OldSha256)) { throw 'Installed executable changed since confirmation' }
-  # Stage next to the destination for same-volume rename, including cross-drive downloads.
-  Copy-Item -LiteralPath $Payload -Destination $stage -Force
-  if (-not (HashOK $stage $Sha256)) { throw 'Target-volume staged digest mismatch' }
-  Remove-Item -LiteralPath $HealthFile -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $failed -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $backup -Force -ErrorAction SilentlyContinue
-  Move-Item -LiteralPath $Target -Destination $backup
-  $swapped = $true
-  Move-Item -LiteralPath $stage -Destination $Target
-  # Electron-builder portable launcher can exit after starting the extracted app.
-  # A valid versioned, nonce-bound visible-window receipt is the success condition.
-  $env:FRAME_BUILDER_HEALTH_FILE = $HealthFile
-  $env:FRAME_BUILDER_HEALTH_TOKEN = $HealthToken
-  $child = Start-Process -FilePath $Target -ArgumentList @(
-    '--frame-update-health-file', ('"' + $HealthFile + '"'),
-    '--frame-update-health-token', $HealthToken
-  ) -PassThru
-  Log ('Launched update entry point PID ' + $child.Id)
-  $healthy = $false
-  for ($i=0; $i -lt 90; $i++) {
-    Start-Sleep -Seconds 1
-    if (Test-Path -LiteralPath $HealthFile -PathType Leaf) {
-      try {
-        $receipt = Get-Content -LiteralPath $HealthFile -Raw | ConvertFrom-Json
-        if ($receipt.token -ceq $HealthToken -and $receipt.version -eq $ExpectedVersion -and
-            $receipt.windowVisible -eq $true) {
-          $healthy = $true
-          break
-        }
-      } catch {
-        # Partial receipt can be retried until the allotted timeout expires.
+  throw 'The previous portable executable is still locked'
+}
+function Track-Children {
+  if($null -eq $child){return}
+  $all=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+  for($depth=0;$depth -lt 5;$depth++){
+    foreach($p in $all){
+      if($p.ProcessId -eq $child.Id -or $owned.ContainsKey([int]$p.ParentProcessId)){
+        if(-not $owned.ContainsKey([int]$p.ProcessId)){$owned[[int]$p.ProcessId]=$p.CreationDate}
       }
     }
   }
-  if (-not $healthy) { throw 'New app did not confirm a visible healthy window' }
-  Log 'Visible, version-matched new window confirmed; rollback backup retained'
-  Remove-Item -LiteralPath $Payload -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $HealthFile -Force -ErrorAction SilentlyContinue
+}
+function Stop-NewProcesses {
+  Track-Children
+  foreach($idValue in @($owned.Keys)){
+    $p=Get-CimInstance Win32_Process -Filter "ProcessId=$idValue" -ErrorAction SilentlyContinue
+    if($p -and $p.CreationDate -eq $owned[$idValue]){
+      Stop-Process -Id $idValue -Force -ErrorAction SilentlyContinue
+    }
+  }
+}
+function Result([string]$state,[string]$message) {
+  Write-Json (Join-Path $job.storage ('result-'+$job.id+'.json')) @{
+    id=$job.id; state=$state; message=$message; helperPid=$PID; version=$job.version
+  }
+}
+try {
+  Assert-Absolute $JobFile
+  $job=Get-Content -LiteralPath $JobFile -Raw | ConvertFrom-Json
+  if($job.appId -cne 'com.techsavage3d.canvasframe' -or $job.id -notmatch '^[a-f0-9]{24}$'){throw 'Wrong update job identity'}
+  foreach($p in @($job.target,$job.payload,$job.stage,$job.storage)){Assert-Absolute $p}
+  if((Split-Path -Leaf $JobFile) -cne ('install-'+$job.id+'.json') -or
+     (Split-Path -Parent $JobFile) -ine $job.storage){throw 'Wrong installer job path'}
+  if($job.payload -ine (Join-Path $job.storage ('update-'+$job.sha256+'.exe'))){throw 'Wrong payload path'}
+  if($job.stage -ine (Join-Path (Split-Path -Parent $job.target) ('.frame-builder-update-'+$job.id))){throw 'Wrong stage path'}
+  if([IO.Path]::GetExtension($job.target) -ine '.exe'){throw 'Target must be an executable'}
+  if($job.version -notmatch '^\d+\.\d+\.\d+$' -or $job.sha256 -notmatch '^[a-f0-9]{64}$' -or $job.oldSha256 -notmatch '^[a-f0-9]{64}$'){throw 'Invalid version or digest'}
+  if(-not (HashOK $job.payload $job.sha256)){throw 'Downloaded update digest mismatch'}
+  Assert-PE $job.payload
+  $v=(Get-Item -LiteralPath $job.payload).VersionInfo
+  if($v.ProductName -cne 'Frame Builder' -or $v.ProductVersion -notmatch ('^'+[regex]::Escape($job.version)+'(?:\.0)?$')){throw 'Wrong update product or version'}
+  if(-not (HashOK $job.target $job.oldSha256)){throw 'Installed executable changed since confirmation'}
+  if(Test-Path -LiteralPath $job.stage){throw 'Update staging folder already exists'}
+  New-Item -ItemType Directory -Path $job.stage | Out-Null
+  $next=Join-Path $job.stage 'next.exe'; $previous=Join-Path $job.stage 'previous.exe'
+  Copy-Item -LiteralPath $job.payload -Destination $next
+  if(-not (HashOK $next $job.sha256)){throw 'Target-volume staged digest mismatch'}
+  $health=Join-Path $job.storage ('health-'+$job.id+'.txt')
+  if(Test-Path -LiteralPath $health){throw 'Health receipt already exists'}
+  Log 'Payload identity, digest and target-volume staging verified'
+  Write-Json (Join-Path $job.storage ('ready-'+$job.id+'.json')) @{id=$job.id;helperPid=$PID}
+  for($i=0;$i -lt 120;$i++){
+    if(Test-Path -LiteralPath (Join-Path $job.storage ('abort-'+$job.id))){throw 'Update preparation cancelled'}
+    if(-not (Get-Process -Id $job.parentPid -ErrorAction SilentlyContinue)){$parentExited=$true;break}
+    Start-Sleep -Seconds 1
+  }
+  if(-not $parentExited){throw 'Previous app has not closed'}
+  Wait-Unlocked $job.target
+  if(-not (HashOK $job.target $job.oldSha256)){throw 'Installed executable changed before replacement'}
+  try {
+    [IO.File]::Replace($next,$job.target,$previous,$true)
+    $swapped=$true
+  } catch [PlatformNotSupportedException] {
+    Move-Item -LiteralPath $job.target -Destination $previous
+    $swapped=$true
+    Move-Item -LiteralPath $next -Destination $job.target
+  } catch [NotSupportedException] {
+    Move-Item -LiteralPath $job.target -Destination $previous
+    $swapped=$true
+    Move-Item -LiteralPath $next -Destination $job.target
+  }
+  $env:FRAME_BUILDER_HEALTH_FILE=$health
+  $env:FRAME_BUILDER_HEALTH_TOKEN=$job.healthToken
+  $child=Start-Process -FilePath $job.target -PassThru
+  $healthy=$false
+  for($i=0;$i -lt 120;$i++){
+    Track-Children
+    Start-Sleep -Seconds 1
+    if(-not (Test-Path -LiteralPath $health -PathType Leaf)){continue}
+    try {
+      $receipt=Get-Content -LiteralPath $health -Raw | ConvertFrom-Json
+      if($receipt.token -ceq $job.healthToken -and $receipt.version -ceq $job.version -and
+         $receipt.windowVisible -eq $true -and $receipt.rendererReady -eq $true){
+        $live=Get-Process -Id $receipt.pid -ErrorAction SilentlyContinue
+        if($live -and $live.MainWindowHandle -ne 0){
+          Start-Sleep -Seconds 3
+          $live=Get-Process -Id $receipt.pid -ErrorAction SilentlyContinue
+          if($live -and $live.MainWindowHandle -ne 0){$healthy=$true;break}
+        }
+      }
+    } catch { }
+  }
+  if(-not $healthy){throw 'New app did not confirm a responsive visible window'}
+  Result 'success' 'The new version opened successfully.'
+  Log 'Responsive visible window confirmed; cleanup deferred until helper exit'
   exit 0
 } catch {
-  Log ('Install failed: ' + $_)
-  if ($swapped) {
-    if ($null -ne $child) {
-      try { if (-not $child.HasExited) { $child.CloseMainWindow() | Out-Null; Start-Sleep -Seconds 2 } } catch {}
-      try { if (-not $child.HasExited) { Stop-Process -Id $child.Id -Force -ErrorAction SilentlyContinue } } catch {}
-    }
+  $failure=[string]$_
+  if($null -eq $job){Write-Error $failure;exit 1}
+  Log ('Install failed: '+$failure)
+  Remove-Item Env:FRAME_BUILDER_HEALTH_FILE -ErrorAction SilentlyContinue
+  Remove-Item Env:FRAME_BUILDER_HEALTH_TOKEN -ErrorAction SilentlyContinue
+  if($swapped){
+    Stop-NewProcesses
     try {
-      if (Test-Path -LiteralPath $Target -PathType Leaf) {
-        Move-Item -LiteralPath $Target -Destination $failed -Force
-      }
-      if (-not (Test-Path -LiteralPath $backup -PathType Leaf)) { throw 'Rollback executable missing' }
-      Move-Item -LiteralPath $backup -Destination $Target -Force
-      Log 'Previous executable restored'
-      Start-Process -FilePath $Target | Out-Null
-      Log 'Previous version restarted'
+      if(Test-Path -LiteralPath $job.target){Wait-Unlocked $job.target}
+      if(-not (HashOK $previous $job.oldSha256)){throw 'Rollback backup unavailable'}
+      if(Test-Path -LiteralPath $job.target){Remove-Item -LiteralPath $job.target -Force}
+      Move-Item -LiteralPath $previous -Destination $job.target
+      Start-Process -FilePath $job.target | Out-Null
+      Result 'rolled-back' ('Update failed; the previous version was restored. '+$failure)
+      Log 'Previous executable restored and restarted'
     } catch {
-      # Keep rollback and failed candidate if a lock prevents restoration.
-      Log ('Manual rollback may be necessary: ' + $_)
-      throw
+      Result 'recovery-required' ('Manual recovery required: '+[string]$_)
+      Log ('Automatic rollback failed: '+[string]$_)
     }
-  }
-  Remove-Item -LiteralPath $stage -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $HealthFile -Force -ErrorAction SilentlyContinue
-  if (Test-Path -LiteralPath $Target -PathType Leaf) {
-    Remove-Item -LiteralPath $failed -Force -ErrorAction SilentlyContinue
+  } else {
+    Result 'failed' $failure
+    if($parentExited -and (HashOK $job.target $job.oldSha256)){
+      Start-Process -FilePath $job.target | Out-Null
+    }
   }
   exit 1
 }

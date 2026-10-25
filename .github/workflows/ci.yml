@@ -27,6 +27,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Native model, exports and production timer integration
+        run: npx electron scripts/native-integration.cjs
       - run: npm run build:windows
       - name: Native packaged-window smoke test
         shell: pwsh
@@ -40,3 +42,10 @@ jobs:
           name: Frame-Builder-Windows-x64-Candidate
           path: dist/Frame_Builder_*_Windows_x64.exe
           retention-days: 14
+      - name: Retain validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Frame-Builder-Validation
+          path: validation/runtime/*.json
+          retention-days: 30

@@ -26,7 +26,8 @@ try {
     if(-not (Test-Path -LiteralPath $health -PathType Leaf)) { continue }
     $receipt=Get-Content -LiteralPath $health -Raw | ConvertFrom-Json
     if($receipt.token -ceq $nonce -and $receipt.version -eq $ExpectedVersion -and
-       $receipt.windowVisible -eq $true) {
+       $receipt.windowVisible -eq $true -and $receipt.rendererReady -eq $true -and
+       (Get-Process -Id $receipt.pid -ErrorAction SilentlyContinue).MainWindowHandle -ne 0) {
       $accepted=$true
       break
     }
@@ -46,7 +47,10 @@ try {
   }
   Write-Host ('Native Windows visible-window check PASS: '+$ExpectedVersion)
 } finally {
-  try { if(-not $process.HasExited) { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue } } catch {}
+  try { if(-not $process.HasExited) { taskkill.exe /PID $process.Id /T /F 2>$null | Out-Null } } catch {}
+  if($receipt -and $receipt.pid){Stop-Process -Id $receipt.pid -Force -ErrorAction SilentlyContinue}
+  Remove-Item Env:FRAME_BUILDER_HEALTH_FILE -ErrorAction SilentlyContinue
+  Remove-Item Env:FRAME_BUILDER_HEALTH_TOKEN -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $health -Force -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $testRoot -Force -Recurse -ErrorAction SilentlyContinue
 }

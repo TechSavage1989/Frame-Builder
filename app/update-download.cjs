@@ -12,7 +12,7 @@ const TRUSTED_REDIRECT_HOSTS = new Set([
 function checkRedirect(value) {
   const u = new URL(value);
   if (u.protocol !== 'https:' || !TRUSTED_REDIRECT_HOSTS.has(u.hostname) ||
-      u.username || u.password || u.port) throw Error('Untrusted download host');
+      u.username || u.password || u.port || u.hash) throw Error('Untrusted download host');
   return u;
 }
 function followDownload(url, depth = 0, transport = https) {
