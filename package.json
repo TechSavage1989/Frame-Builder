@@ -8,7 +8,7 @@
   "main": "app/main.cjs",
   "scripts": {
     "start": "electron .",
-    "check": "node --test scripts/desktop.test.cjs scripts/update.test.cjs",
+    "check": "node scripts/check-layout.cjs && node --test scripts/desktop.test.cjs scripts/update.test.cjs",
     "build:windows": "node scripts/sync-builder.cjs && npm run check && electron-builder --win portable --x64 --publish never"
   },
   "devDependencies": {

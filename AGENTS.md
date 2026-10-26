@@ -10,3 +10,9 @@
 8. Require source checks, hosted Windows launch, actual timers, hosted download/digest checks, native installation/rollback, settings and shortcut continuity before calling a release ready. Reuse passed tests only with recorded evidence and unchanged relevant source.
 9. Rejected Borderless fold-flat prototypes remain excluded. Fusion Builder 1.4.2 is a separate tool. Do not reintroduce the rejected stand or expand Fusion scope without an explicit request.
 10. No server setup, Codex CLI automation, unattended workers, credentials, payment systems or API-account setup.
+
+## Repository layout (2026-10-26)
+
+The root is reserved for README.md, AGENTS.md, DEVELOPMENT_HANDOFF.md, manifests, build entry points and the existing tool configuration. app/, browser/ and cad_source/ retain their existing source roles; assets/ holds branding; scripts/ holds build and test tooling; validation/ holds evidence. Supplementary guides belong in docs/. Current release notes are docs/releases/RELEASE_NOTES.md; before the next app release archive the previous notes as docs/releases/v<version>.md. Never add versioned notes or build outputs at the root. Keep published package filenames unchanged.
+
+Run `node scripts/check-layout.cjs` before committing; CI rejects unexpected tracked or unignored root entries. Layout-only changes do not increment the app version, create tags/releases, or replace published assets. Do not use a release-trigger commit marker or a release branch for cleanup work.

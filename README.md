@@ -101,3 +101,7 @@ The desktop preserves the accepted Canvas Frame Builder 3.51.6 geometry. Fusion 
 ## License
 
 Source and releases are public; **no reuse license has been selected**.
+
+### Source organization
+
+`app/`, `browser/` and `cad_source/` retain their existing source roles; assets/ holds branding; scripts/ holds build and test tooling; validation/ holds evidence. See [development handoff](DEVELOPMENT_HANDOFF.md) and [release notes](docs/releases/RELEASE_NOTES.md).

@@ -99,7 +99,7 @@ jobs:
           $dir='dist/portable'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
           Copy-Item "dist/Frame_Builder_${v}_Windows_x64.exe" "$dir/Frame Builder.exe"
-          Copy-Item QUICK_START.txt "$dir/README.txt"
+          Copy-Item docs/QUICK_START.txt "$dir/README.txt"
           Compress-Archive -Path "$dir/*" -DestinationPath "dist/Frame_Builder_${v}_Windows_x64.zip"
           $files=@("Frame_Builder_${v}_Windows_x64.exe","Frame_Builder_${v}_Windows_x64.zip",'update-manifest.json')
           $lines=@($files | ForEach-Object { ((Get-FileHash -LiteralPath "dist/$_" -Algorithm SHA256).Hash.ToLower())+'  '+$_ })
@@ -113,7 +113,7 @@ jobs:
           $v=(Get-Content package.json | ConvertFrom-Json).version
           $args=@('release','create',"v$v","dist/Frame_Builder_${v}_Windows_x64.exe","dist/Frame_Builder_${v}_Windows_x64.zip",
             'dist/update-manifest.json','dist/SHA256SUMS.txt','--repo','${{ github.repository }}',
-            '--title',"Frame Builder $v",'--notes-file','RELEASE_NOTES.md','--prerelease')
+            '--title',"Frame Builder $v",'--notes-file','docs/releases/RELEASE_NOTES.md','--prerelease')
           if ('${{ github.ref_type }}' -eq 'tag') {$args+='--verify-tag'} else {$args+=@('--target','${{ github.sha }}')}
           gh @args
           if($LASTEXITCODE -ne 0){throw 'Release publication failed'}
