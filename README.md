@@ -29,17 +29,27 @@
 
 ## Screenshots
 
-**Exploded assembly with the parts list**
+### Frame styles
 
-<img src="docs/images/exploded-assembly.png" alt="Exploded assembly with the parts list" width="900">
+<table>
+<tr><td width="50%" valign="top"><b>Original snap frame, with the panel loading through the top opening</b><br><img src="docs/images/style-original-snap.png" alt="Original snap frame, with the panel loading through the top opening" width="440"></td><td width="50%" valign="top"><b>Top-loading frame, with its panel loading view</b><br><img src="docs/images/style-top-loading.png" alt="Top-loading frame, with its panel loading view" width="440"></td></tr>
+<tr><td width="50%" valign="top"><b>Front Snap Borderless frame with its assembly guidance</b><br><img src="docs/images/front-snap-borderless.png" alt="Front Snap Borderless frame with its assembly guidance" width="440"></td><td width="50%"></td></tr>
+</table>
 
-**Print plate preview, arranged for the printer bed**
+### Design and inspect
 
-<img src="docs/images/print-plates.png" alt="Print plate preview, arranged for the printer bed" width="900">
+<table>
+<tr><td width="50%" valign="top"><b>Frame settings: bezel, artwork overlap, joint faceplates and orientation</b><br><img src="docs/images/frame-settings.png" alt="Frame settings: bezel, artwork overlap, joint faceplates and orientation" width="440"></td><td width="50%" valign="top"><b>An 18 x 24 in panel planned into frame sections and UV base tiles, exploded</b><br><img src="docs/images/large-panel-sections.png" alt="An 18 x 24 in panel planned into frame sections and UV base tiles, exploded" width="440"></td></tr>
+<tr><td width="50%" valign="top"><b>Exploded assembly with the parts list</b><br><img src="docs/images/exploded-assembly.png" alt="Exploded assembly with the parts list" width="440"></td><td width="50%" valign="top"><b>Inspect a single part, with its print size</b><br><img src="docs/images/inspect-part.png" alt="Inspect a single part, with its print size" width="440"></td></tr>
+<tr><td width="50%" valign="top"><b>The live 3D viewer detached into its own window</b><br><img src="docs/images/detached-viewer.png" alt="The live 3D viewer detached into its own window" width="440"></td><td width="50%"></td></tr>
+</table>
 
-**Front Snap Borderless frame with its assembly guidance**
+### Plan the print and export
 
-<img src="docs/images/front-snap-borderless.png" alt="Front Snap Borderless frame with its assembly guidance" width="900">
+<table>
+<tr><td width="50%" valign="top"><b>Printer settings: frame sections, bed size and margins</b><br><img src="docs/images/printer-settings.png" alt="Printer settings: frame sections, bed size and margins" width="440"></td><td width="50%" valign="top"><b>Print plate preview, arranged for the printer bed</b><br><img src="docs/images/print-plates.png" alt="Print plate preview, arranged for the printer bed" width="440"></td></tr>
+<tr><td width="50%" valign="top"><b>Export options: 3MF plates, STEP CAD assemblies, fit tests and STL sets</b><br><img src="docs/images/export-options.png" alt="Export options: 3MF plates, STEP CAD assemblies, fit tests and STL sets" width="440"></td><td width="50%"></td></tr>
+</table>
 
 ## Download
 
