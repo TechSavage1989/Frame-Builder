@@ -3,7 +3,7 @@ const {execFileSync}=require('node:child_process');
 const path=require('node:path');
 const fs=require('node:fs');
 const root=path.resolve(__dirname,'..');
-const allowed=new Set([".github", ".gitignore", "AGENTS.md", "Build_Windows.cmd", "DEVELOPMENT_HANDOFF.md", "README.md", "app", "assets", "browser", "cad_source", "docs", "package-lock.json", "package.json", "release-validation.json", "scripts", "validation"]);
+const allowed=new Set([".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "Build_Windows.cmd", "DEVELOPMENT_HANDOFF.md", "README.md", "app", "assets", "browser", "cad_source", "docs", "package-lock.json", "package.json", "release-validation.json", "scripts", "validation"]);
 let files;
 if(fs.existsSync(path.join(root,'.git'))){
 files=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
