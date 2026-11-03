@@ -3,14 +3,19 @@
 </p>
 
 <h1 align="center">Frame Builder</h1>
-
 <p align="center">Design, preview and export 3D-printable frames and UV-printable backing panels.</p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#getting-started">Get started</a> · <a href="#features">Features</a> · <a href="#updates-and-settings">Updates</a> · <a href="#development">Development</a>
+  <a href="https://github.com/TechSavage1989/Frame-Builder/releases/latest">Download</a> ·
+  <a href="#getting-started">Get started</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#development">Development</a>
 </p>
 
----
+<p align="center">
+  <img src="docs/images/hero.png" alt="Frame Builder main window" width="900">
+</p>
 
 ## Features
 
@@ -21,6 +26,20 @@
 - **Four frame styles:** Original Snap, Top-Loading, Lightweight Adaptive Depth and Front Snap Borderless.
 - **Build to fit:** reinforced UV-panel joints, optional Front Snap frame springs, one-/two-/four-section planning, centered braces, mounts and stands.
 - **Plan the print:** fit-test parts, arranged plates and Bambu X1C bed exclusions.
+
+## Screenshots
+
+**Exploded assembly with the parts list**
+
+<img src="docs/images/exploded-assembly.png" alt="Exploded assembly with the parts list" width="900">
+
+**Print plate preview, arranged for the printer bed**
+
+<img src="docs/images/print-plates.png" alt="Print plate preview, arranged for the printer bed" width="900">
+
+**Front Snap Borderless frame with its assembly guidance**
+
+<img src="docs/images/front-snap-borderless.png" alt="Front Snap Borderless frame with its assembly guidance" width="900">
 
 ## Download
 
@@ -98,10 +117,10 @@ The desktop preserves the accepted Canvas Frame Builder 3.51.6 geometry. Fusion 
 
 </details>
 
-## License
-
-Source and releases are public; **no reuse license has been selected**.
-
 ### Source organization
 
 `app/`, `browser/` and `cad_source/` retain their existing source roles; assets/ holds branding; scripts/ holds build and test tooling; validation/ holds evidence. See [development handoff](DEVELOPMENT_HANDOFF.md) and [release notes](docs/releases/RELEASE_NOTES.md).
+
+## License
+
+Source and releases are public; **no reuse license has been selected**.
