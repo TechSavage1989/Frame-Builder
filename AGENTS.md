@@ -2,7 +2,7 @@
 
 1. Read DEVELOPMENT_HANDOFF.md before changing source, distribution, build scripts, or releases.
 2. Canonical repository is https://github.com/TechSavage1989/Frame-Builder. It is public. Public source and compiled releases are owner-approved. Do not change visibility or choose a license without a separate request.
-3. Latest validated desktop release is Frame Builder 3.51.16, tag v3.51.16, application source 1a4d688447408586a63f80a0c8fd70442f7d26f4. Last accepted CAD baseline is Canvas Frame Builder 3.51.6. Start from maintained source and read the handoff, not an older ZIP.
+3. Latest validated desktop release is Frame Builder 3.51.17, tag v3.51.17, application source 14be26a70a17fa57c55cb763981f21a4fbef5803. Last accepted CAD baseline is Canvas Frame Builder 3.51.6. Start from maintained source and read the handoff, not an older ZIP.
 4. Preserve all four frame styles, reinforced UV-panel joints, optional Front Snap frame springs, centered braces and mounts, accepted stand designs, bed exclusions, preview, saved preferences, and STL/STEP/3MF exports.
 5. Stable installed name is Frame Builder.exe; retain the actual existing filename when customized. Keep settings, logs, cache, downloads, staging records and one rollback backup in the legacy per-user Canvas Frame Builder storage. Target-volume staging is transient.
 6. Check automatically but never download, install or restart without user action. Guard active operations. Offline and failed checks must remain unknown, never up to date.
@@ -39,8 +39,9 @@ Where this file's project-specific rules differ from the shared standard, this f
 
 - Release manifest summaries are derived from docs/releases/RELEASE_NOTES.md. Keep those notes current in the release PR. Never edit already-published assets to correct summary wording.
 
-## Pending updater test release (3.51.17)
+## Validated updater test release (3.51.17)
 
 - Owner requested a small visible test update after manually installing 3.51.16. The viewer heading now reads "3D preview"; runtime/geometry behavior is unchanged.
 - Actual hosted update UI tests use the exact standard filename "Frame Builder.exe". Direct native tests retain accented custom-name coverage.
-- Publish only after the existing Windows CI and fresh 3.51.16-to-3.51.17 release gates pass. Record the final immutable source and evidence in the handoff.
+- Exact-source Windows CI 42349347109 and fresh 3.51.16-to-3.51.17 release verification 42349348335 passed. See validation/RELEASE_VERIFICATION_3.51.17.json and the handoff for immutable source, hashes and limitations.
+- The user-PC failure has not been reproduced. This release enables another test; do not describe its label/version change as an updater runtime fix.
