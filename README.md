@@ -10,6 +10,7 @@
   <a href="#getting-started">Get started</a> ·
   <a href="#features">Features</a> ·
   <a href="#screenshots">Screenshots</a> ·
+  <a href="#updates-and-settings">Updates</a> ·
   <a href="#development">Development</a>
 </p>
 
@@ -25,9 +26,12 @@
 
 - **Four frame styles:** Original Snap, Top-Loading, Lightweight Adaptive Depth and Front Snap Borderless.
 - **Build to fit:** reinforced UV-panel joints, optional Front Snap frame springs, one-/two-/four-section planning, centered braces, mounts and stands.
+- **Responsive editing:** background preview generation cancels superseded builds while you keep adjusting settings. The last valid preview stays visible, and exports become available when the current model is ready.
 - **Plan the print:** fit-test parts, arranged plates and Bambu X1C bed exclusions.
 
 ## Screenshots
+
+The gallery covers each main feature; the Lightweight style appears in the hero image.
 
 ### Frame styles
 
@@ -53,7 +57,7 @@
 
 ## Download
 
-**[Get Frame Builder for Windows →](https://github.com/TechSavage1989/Frame-Builder/releases/latest)**
+**[Get Frame Builder for Windows](https://github.com/TechSavage1989/Frame-Builder/releases/latest)**
 
 In the release's **Assets**, choose `Frame_Builder_<version>_Windows_x64.zip`. This is the portable application; GitHub's **Source code** archives are for development. Release notes and `SHA256SUMS.txt` are on the same page.
 
@@ -70,8 +74,8 @@ The application is **not code signed**. Release checksums verify integrity again
 1. **Extract the ZIP** and run `Frame Builder.exe`. Keep this folder if you create a shortcut.
 2. **Choose a frame style.** In **Panel**, set the size and finished thickness, then choose an existing panel or generate a printable UV base.
 3. **Review Frame and Printer settings**, including section planning and your printer's bed limits.
-4. **Inspect the preview** and choose **Preview print plates** to check the layout.
-5. **Print a fit test first:** select a file format and use **Fit test files**. Once the fit is right, choose **Download print files** for the complete model.
+4. **Inspect the preview** and choose **Print plates** to check the layout.
+5. **Print a fit test first:** select a file format and use **Fit test files**. Once the fit is right, choose the main **Export** button for the complete model.
 
 > Check alignment, retention and release before printing a full model. Review **Assembly & help**, use 100% scale and the supplied orientations, and verify printer/filament profiles in your slicer. Exports do not contain G-code.
 

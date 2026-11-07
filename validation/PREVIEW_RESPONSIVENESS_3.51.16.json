@@ -1,0 +1,932 @@
+{
+  "version": "3.51.16",
+  "baselineCommit": "c52822ce6a7de1558b5ff54299e1fd1fd50f02b2",
+  "environment": "Linux headless Chromium, 1440 x 960 viewport, software WebGL",
+  "method": "One sequential run per case. UI gaps sampled with a 16 ms timer. STL SHA-256 and print bounds match for every part; triangle counts also match. Timing is diagnostic, not a cross-device guarantee.",
+  "results": {
+    "baseline": [
+      {
+        "style": "original",
+        "w": 203.2,
+        "h": 254,
+        "engine": "main-thread",
+        "elapsedMs": 1013,
+        "maxUiGapMs": 766,
+        "triangles": 43184,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Half",
+            "hash": "7dd62d529bd387d959f8ecb518f0ca4fe85bed956fc0fc868477b99b8bc86b9f",
+            "size": [
+              223.2,
+              151,
+              9
+            ]
+          },
+          {
+            "name": "Frame_Top_Half",
+            "hash": "43d30e63f6467a38fd81b8f31424d8b11b80753e872185f3bf02b9198826bcbc",
+            "size": [
+              223.2,
+              137,
+              9
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "42884b6febf97631b899263275a5c86ef69c06c27b98565a9462c72b95e884ba",
+            "size": [
+              62.5,
+              62.275989,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "42884b6febf97631b899263275a5c86ef69c06c27b98565a9462c72b95e884ba",
+            "size": [
+              62.5,
+              62.275989,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "180b997cbd1268951193556aa0c1d56a06834176a0eb489d2889a3d73aaf5231",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "871b65269639a41c12cb15304a9e2bd434ea007f0b467957f3d17849a9040590",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "solid",
+        "w": 203.2,
+        "h": 254,
+        "engine": "main-thread",
+        "elapsedMs": 1094,
+        "maxUiGapMs": 814,
+        "triangles": 48762,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Half",
+            "hash": "dac78ca9c8b48a628bb2b88c13183b7de407bddc5741ddb6bb4f3fc82f6cac34",
+            "size": [
+              223.2,
+              144.65,
+              11
+            ]
+          },
+          {
+            "name": "Frame_Top_Half",
+            "hash": "349be854f46ad5825c6425fa922d2eff65b9b5b5cd044f3ebd2db04703ef24cb",
+            "size": [
+              223.2,
+              137,
+              11
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "66d37b78ec4645b78de0db3e32588cb9e6a628a41bb588bc6b92501fe29d3777",
+            "size": [
+              62.5,
+              60.314727,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "66d37b78ec4645b78de0db3e32588cb9e6a628a41bb588bc6b92501fe29d3777",
+            "size": [
+              62.5,
+              60.314727,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "17c278f150ab98146e3a9398c20ae1e62c558d213f22fa33703329823f837869",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "bc06faad494d3bf2f6092b32c4c5ac2b2cefa552a704f5a8e669a2d7ced3a5d6",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "light",
+        "w": 203.2,
+        "h": 254,
+        "engine": "main-thread",
+        "elapsedMs": 1020,
+        "maxUiGapMs": 751,
+        "triangles": 50768,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Half",
+            "hash": "a33794d3e4d943b9e79839cbfecf97c4e44f9222008cec7c774ab473c56ffe12",
+            "size": [
+              223.2,
+              141.65,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Half",
+            "hash": "9e2f1e81171afac3b394f3b69c4ff0b11a88077a3f81638507e7910bcd5ab54c",
+            "size": [
+              223.2,
+              137,
+              8
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "49728de6f272fc30ab1c2b9648737d660212c7fe94b372a9748a77ff22d9ff7d",
+            "size": [
+              62.5,
+              63.25662,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "49728de6f272fc30ab1c2b9648737d660212c7fe94b372a9748a77ff22d9ff7d",
+            "size": [
+              62.5,
+              63.25662,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "993b4a28d2e779676589cbed9816d30f32fa3e52456bb55369f92b6ccb2b26ec",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "d4ae1c0007c423441f447bf39b310550d6823525e2df0f0417a66289e9abf482",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "borderless",
+        "w": 203.2,
+        "h": 254,
+        "engine": "main-thread",
+        "elapsedMs": 1732,
+        "maxUiGapMs": 1511,
+        "triangles": 72358,
+        "meshes": [
+          {
+            "name": "Frame_Front_Snap_Bottom_Half",
+            "hash": "5e3c5b5b960cb9376051919c75a608cd76c11fa58ee3aa5a10e42d2ae94c5691",
+            "size": [
+              206.3,
+              160.55,
+              11
+            ]
+          },
+          {
+            "name": "Frame_Front_Snap_Top_Half",
+            "hash": "277784fa2e55fb6b01010c5f28cde87de395f8443811445244291698f28c2a77",
+            "size": [
+              206.3,
+              110.55,
+              11
+            ]
+          },
+          {
+            "name": "Breakaway_Easel_Replacement",
+            "hash": "0b3ab9a6d2eacc35aaea6f04e88fcda6eb9479dfb8dc39513a5a0e0a2e0bb9be",
+            "size": [
+              54.97,
+              62.746861,
+              3.2
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "79f3cbe2cf702183e9363edb994c3a683a711e1b5dda0dccef40587143b3c0e4",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "ca550a151ba2ad8169c1486ab06cef4807cd539b4cfa0243c30a5363858e95fc",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "light",
+        "w": 457.2,
+        "h": 609.6,
+        "engine": "main-thread",
+        "elapsedMs": 16632,
+        "maxUiGapMs": 16043,
+        "triangles": 702044,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Left",
+            "hash": "73ff6bf3251cb2b9a72ec21a8c970c05211262ad6f6d0d6ee1e52ea26f511c42",
+            "size": [
+              163.716667,
+              214.516667,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Bottom_Center_1",
+            "hash": "00b80192061e4d1c7203407f86cfe287dc345727dd809abf2a4a1a686ec3a0cc",
+            "size": [
+              163.716666,
+              12,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Bottom_Right",
+            "hash": "a229a417cfbcef6680008d232c96f1244b80097c283d84ce0b92b4a7fbd5829d",
+            "size": [
+              159.066667,
+              214.516667,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Middle_1_Left",
+            "hash": "706c550ce4bb09687c334b07c5878c8067f3d6429ec7bb245cc437f41bad293c",
+            "size": [
+              12,
+              214.516666,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Middle_1_Right",
+            "hash": "857bae96fa3b52bbb9d839d502027fd0b020a83afbec1dae31f1fc7481cfbf0e",
+            "size": [
+              12,
+              214.516666,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Left",
+            "hash": "27178c466dbd40912890fa1d221c49264b6afe6c54f024e76deeecad5ae83e89",
+            "size": [
+              163.716667,
+              209.866667,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Center_1",
+            "hash": "e6673973d5a86011af0abc501f8880de72e8b23cc62decfb6a6b7d6b8be5d965",
+            "size": [
+              163.716666,
+              12,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Right",
+            "hash": "d3e9e4121cadf893ae5409a9993c42c28769fccb459b51cc137e1ad59400c85f",
+            "size": [
+              159.066667,
+              209.866667,
+              8
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "48640c2173d1a503a311416647bcfd34a0050693a9ea3e8607451ccedff082b7",
+            "size": [
+              52.5,
+              105.513339,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "48640c2173d1a503a311416647bcfd34a0050693a9ea3e8607451ccedff082b7",
+            "size": [
+              52.5,
+              105.513339,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "e55e3a01e57062635251d34a02f12bc162f295bc7c4e13609b816bd84e5a0252",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C2",
+            "hash": "441aa927f603ae72aba0176b4e0abd37118b14ba9021ceab0c2590af560e35b4",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C3",
+            "hash": "1fe0de771bf9c3056d7ea5d670e90bc81ff99c8e72d60b05cb777860dba6db42",
+            "size": [
+              152.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "1467cb92e64a53956f345c72d08fb7f15ac98021716374e4ad969b1cbd9445db",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C2",
+            "hash": "4cffd88ca3772372caa7f71be9d56a99d74accf62f8cfb5e2d25e7c46ce3e0e1",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C3",
+            "hash": "3924d709a002dae8d63aa896eb6e09fe87d3c44cb62374a9748f5b7eb96a6a64",
+            "size": [
+              152.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R3_C1",
+            "hash": "f9c987a1fed2cdf01c30a87bb8a1b5801667b968cee3504b85185e351bcbb6c5",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R3_C2",
+            "hash": "afda0915a4c3e646236ac2f0c5f6c90066a00a88c3d0147d569c9fdc56398020",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R3_C3",
+            "hash": "87f0e77c96405a44a82c093dc7a6da617fb3c7bc013bc0756a9cc0bb9a2a671f",
+            "size": [
+              152.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R4_C1",
+            "hash": "71b2d9215c37b142fbe2bf4789c73eb6cdc99689a5c124f84e5b5fccf36b603c",
+            "size": [
+              208.4,
+              152.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R4_C2",
+            "hash": "7019af3a2a26073f0617f7ea306da640e07e37e6e7323d085dd2413f0c5f9bf6",
+            "size": [
+              208.4,
+              152.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R4_C3",
+            "hash": "a6fb031bc2f9959add2b7b6798f6bb91b1a19b14eb3c90fc9663e7d4b5bdfb12",
+            "size": [
+              152.4,
+              152.4,
+              3
+            ]
+          }
+        ]
+      }
+    ],
+    "updated": [
+      {
+        "style": "original",
+        "w": 203.2,
+        "h": 254,
+        "engine": "worker",
+        "elapsedMs": 982,
+        "maxUiGapMs": 84,
+        "triangles": 43184,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Half",
+            "hash": "7dd62d529bd387d959f8ecb518f0ca4fe85bed956fc0fc868477b99b8bc86b9f",
+            "size": [
+              223.2,
+              151,
+              9
+            ]
+          },
+          {
+            "name": "Frame_Top_Half",
+            "hash": "43d30e63f6467a38fd81b8f31424d8b11b80753e872185f3bf02b9198826bcbc",
+            "size": [
+              223.2,
+              137,
+              9
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "42884b6febf97631b899263275a5c86ef69c06c27b98565a9462c72b95e884ba",
+            "size": [
+              62.5,
+              62.275989,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "42884b6febf97631b899263275a5c86ef69c06c27b98565a9462c72b95e884ba",
+            "size": [
+              62.5,
+              62.275989,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "180b997cbd1268951193556aa0c1d56a06834176a0eb489d2889a3d73aaf5231",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "871b65269639a41c12cb15304a9e2bd434ea007f0b467957f3d17849a9040590",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "solid",
+        "w": 203.2,
+        "h": 254,
+        "engine": "worker",
+        "elapsedMs": 954,
+        "maxUiGapMs": 62,
+        "triangles": 48762,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Half",
+            "hash": "dac78ca9c8b48a628bb2b88c13183b7de407bddc5741ddb6bb4f3fc82f6cac34",
+            "size": [
+              223.2,
+              144.65,
+              11
+            ]
+          },
+          {
+            "name": "Frame_Top_Half",
+            "hash": "349be854f46ad5825c6425fa922d2eff65b9b5b5cd044f3ebd2db04703ef24cb",
+            "size": [
+              223.2,
+              137,
+              11
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "66d37b78ec4645b78de0db3e32588cb9e6a628a41bb588bc6b92501fe29d3777",
+            "size": [
+              62.5,
+              60.314727,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "66d37b78ec4645b78de0db3e32588cb9e6a628a41bb588bc6b92501fe29d3777",
+            "size": [
+              62.5,
+              60.314727,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "17c278f150ab98146e3a9398c20ae1e62c558d213f22fa33703329823f837869",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "bc06faad494d3bf2f6092b32c4c5ac2b2cefa552a704f5a8e669a2d7ced3a5d6",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "light",
+        "w": 203.2,
+        "h": 254,
+        "engine": "worker",
+        "elapsedMs": 1011,
+        "maxUiGapMs": 87,
+        "triangles": 50768,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Half",
+            "hash": "a33794d3e4d943b9e79839cbfecf97c4e44f9222008cec7c774ab473c56ffe12",
+            "size": [
+              223.2,
+              141.65,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Half",
+            "hash": "9e2f1e81171afac3b394f3b69c4ff0b11a88077a3f81638507e7910bcd5ab54c",
+            "size": [
+              223.2,
+              137,
+              8
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "49728de6f272fc30ab1c2b9648737d660212c7fe94b372a9748a77ff22d9ff7d",
+            "size": [
+              62.5,
+              63.25662,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "49728de6f272fc30ab1c2b9648737d660212c7fe94b372a9748a77ff22d9ff7d",
+            "size": [
+              62.5,
+              63.25662,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "993b4a28d2e779676589cbed9816d30f32fa3e52456bb55369f92b6ccb2b26ec",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "d4ae1c0007c423441f447bf39b310550d6823525e2df0f0417a66289e9abf482",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "borderless",
+        "w": 203.2,
+        "h": 254,
+        "engine": "worker",
+        "elapsedMs": 1817,
+        "maxUiGapMs": 109,
+        "triangles": 72358,
+        "meshes": [
+          {
+            "name": "Frame_Front_Snap_Bottom_Half",
+            "hash": "5e3c5b5b960cb9376051919c75a608cd76c11fa58ee3aa5a10e42d2ae94c5691",
+            "size": [
+              206.3,
+              160.55,
+              11
+            ]
+          },
+          {
+            "name": "Frame_Front_Snap_Top_Half",
+            "hash": "277784fa2e55fb6b01010c5f28cde87de395f8443811445244291698f28c2a77",
+            "size": [
+              206.3,
+              110.55,
+              11
+            ]
+          },
+          {
+            "name": "Breakaway_Easel_Replacement",
+            "hash": "0b3ab9a6d2eacc35aaea6f04e88fcda6eb9479dfb8dc39513a5a0e0a2e0bb9be",
+            "size": [
+              54.97,
+              62.746861,
+              3.2
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "79f3cbe2cf702183e9363edb994c3a683a711e1b5dda0dccef40587143b3c0e4",
+            "size": [
+              203.2,
+              183,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "ca550a151ba2ad8169c1486ab06cef4807cd539b4cfa0243c30a5363858e95fc",
+            "size": [
+              203.2,
+              127,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "style": "light",
+        "w": 457.2,
+        "h": 609.6,
+        "engine": "worker",
+        "elapsedMs": 16789,
+        "maxUiGapMs": 769,
+        "triangles": 702044,
+        "meshes": [
+          {
+            "name": "Frame_Bottom_Left",
+            "hash": "73ff6bf3251cb2b9a72ec21a8c970c05211262ad6f6d0d6ee1e52ea26f511c42",
+            "size": [
+              163.716667,
+              214.516667,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Bottom_Center_1",
+            "hash": "00b80192061e4d1c7203407f86cfe287dc345727dd809abf2a4a1a686ec3a0cc",
+            "size": [
+              163.716666,
+              12,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Bottom_Right",
+            "hash": "a229a417cfbcef6680008d232c96f1244b80097c283d84ce0b92b4a7fbd5829d",
+            "size": [
+              159.066667,
+              214.516667,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Middle_1_Left",
+            "hash": "706c550ce4bb09687c334b07c5878c8067f3d6429ec7bb245cc437f41bad293c",
+            "size": [
+              12,
+              214.516666,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Middle_1_Right",
+            "hash": "857bae96fa3b52bbb9d839d502027fd0b020a83afbec1dae31f1fc7481cfbf0e",
+            "size": [
+              12,
+              214.516666,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Left",
+            "hash": "27178c466dbd40912890fa1d221c49264b6afe6c54f024e76deeecad5ae83e89",
+            "size": [
+              163.716667,
+              209.866667,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Center_1",
+            "hash": "e6673973d5a86011af0abc501f8880de72e8b23cc62decfb6a6b7d6b8be5d965",
+            "size": [
+              163.716666,
+              12,
+              8
+            ]
+          },
+          {
+            "name": "Frame_Top_Right",
+            "hash": "d3e9e4121cadf893ae5409a9993c42c28769fccb459b51cc137e1ad59400c85f",
+            "size": [
+              159.066667,
+              209.866667,
+              8
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Left",
+            "hash": "48640c2173d1a503a311416647bcfd34a0050693a9ea3e8607451ccedff082b7",
+            "size": [
+              52.5,
+              105.513339,
+              4
+            ]
+          },
+          {
+            "name": "Rigid_Rear_Support_Right",
+            "hash": "48640c2173d1a503a311416647bcfd34a0050693a9ea3e8607451ccedff082b7",
+            "size": [
+              52.5,
+              105.513339,
+              4
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C1",
+            "hash": "e55e3a01e57062635251d34a02f12bc162f295bc7c4e13609b816bd84e5a0252",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C2",
+            "hash": "441aa927f603ae72aba0176b4e0abd37118b14ba9021ceab0c2590af560e35b4",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R1_C3",
+            "hash": "1fe0de771bf9c3056d7ea5d670e90bc81ff99c8e72d60b05cb777860dba6db42",
+            "size": [
+              152.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C1",
+            "hash": "1467cb92e64a53956f345c72d08fb7f15ac98021716374e4ad969b1cbd9445db",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C2",
+            "hash": "4cffd88ca3772372caa7f71be9d56a99d74accf62f8cfb5e2d25e7c46ce3e0e1",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R2_C3",
+            "hash": "3924d709a002dae8d63aa896eb6e09fe87d3c44cb62374a9748f5b7eb96a6a64",
+            "size": [
+              152.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R3_C1",
+            "hash": "f9c987a1fed2cdf01c30a87bb8a1b5801667b968cee3504b85185e351bcbb6c5",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R3_C2",
+            "hash": "afda0915a4c3e646236ac2f0c5f6c90066a00a88c3d0147d569c9fdc56398020",
+            "size": [
+              208.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R3_C3",
+            "hash": "87f0e77c96405a44a82c093dc7a6da617fb3c7bc013bc0756a9cc0bb9a2a671f",
+            "size": [
+              152.4,
+              208.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R4_C1",
+            "hash": "71b2d9215c37b142fbe2bf4789c73eb6cdc99689a5c124f84e5b5fccf36b603c",
+            "size": [
+              208.4,
+              152.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R4_C2",
+            "hash": "7019af3a2a26073f0617f7ea306da640e07e37e6e7323d085dd2413f0c5f9bf6",
+            "size": [
+              208.4,
+              152.4,
+              3
+            ]
+          },
+          {
+            "name": "UV_Panel_R4_C3",
+            "hash": "a6fb031bc2f9959add2b7b6798f6bb91b1a19b14eb3c90fc9663e7d4b5bdfb12",
+            "size": [
+              152.4,
+              152.4,
+              3
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

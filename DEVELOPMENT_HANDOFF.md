@@ -1,5 +1,16 @@
 # Frame Builder development handoff
 
+## Responsiveness and polish candidate (2026-11-07)
+
+- Application candidate: 3.51.16. The latest validated published release remains 3.51.15 until the new Windows release workflow completes.
+- Preview planning and meshing now run in an offline Blob worker. A revision guard and worker termination discard superseded requests; the fallback yields between parts when workers are unavailable. Exports stay disabled while pending or invalid, with the last valid preview retained.
+- FrameV3.make performs derivation once. The main UI no longer repeats that planning on every keystroke. Rendering uses direct typed buffers and fewer temporary arrays; explode input is coalesced per animation frame.
+- Shorter export labels, redundant viewer badges removed, and a wrapping narrow-window header. Current screenshots were recaptured from the real generated app.
+- All four default styles plus an 18 x 24 in tiled model retain exactly matching STL bytes and triangle counts against the previous application. Local timing evidence is in validation/PREVIEW_RESPONSIVENESS_3.51.16.json. Measurements describe one local browser run, not a general build-speed guarantee.
+- Existing 22 source checks pass. Added native integration coverage for responsive timers, cancellation, export gating, invalid-input recovery, slider coalescing and byte-identical worker fallback. Windows CI and hosted installation/rollback evidence must pass before stable publication.
+- Build the maintained browser source with python cad_source/build_html.py, then node scripts/sync-builder.cjs. The browser filename retains the accepted CAD baseline version. The CAD source STL header was aligned with the historical 3.51.0 header already shipped in the generated app so regeneration preserves export bytes.
+- The expanded screenshot gallery is retained as a documented exception to the shared 2-4-image guideline because it was explicitly added for coverage of every main feature.
+
 ## Current verified state (2026-10-25)
 
 - Latest desktop release: Frame Builder 3.51.15, tag v3.51.15.

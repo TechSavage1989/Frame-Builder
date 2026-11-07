@@ -23,7 +23,7 @@ function setExports(ready){
 function exportMessage(message){for(const id of ['downloadNotice','exportStatus','plateExportStatus']){const el=$(id);if(el){el.textContent=message;el.dataset.state=message.startsWith('Export failed:')?'error':'status';}}}
 function updateExportLabels(){
  const step=$('exportFormat').value==='step',panel=!!MODEL?.params.panelCount;
- $('download').textContent=$('exportFormat').value==='3mf'?(plateExportChoice().packaging==='project'?'Download all plates - one 3MF':'Download all plates - separate 3MFs'):step?'Download complete STEP set':panel?'Download complete STL set':'Download frame STL set';
+ $('download').textContent=$('exportFormat').value==='3mf'?(plateExportChoice().packaging==='project'?'Export 3MF project':'Export 3MF plates'):step?'Export STEP set':panel?'Export STL set':'Export frame STL set';
  $('downloadSTEPAssembly').textContent=panel?'Frame and UV base assembly STEP':'Frame assembly STEP';
  $('stepAssemblyHint').textContent=panel?'Named frame and panel solids, fully assembled.':'Named frame-section solids in their assembled positions.';
  $('stepPanelGroup').hidden=$('panelSource').value!=='printed';
@@ -64,9 +64,15 @@ function update(){
  $('printedPanelSettings').hidden=$('panelSource').value!=='printed';$('downloadPanel').closest('.downloadgroup').hidden=$('panelSource').value!=='printed';
  $('individualMargins').hidden=!$('customMargins').checked;$('uniformMargin').hidden=$('customMargins').checked;
  $('margin').disabled=$('customMargins').checked;for(let id of ['marginLeft','marginRight','marginFront','marginBack'])$(id).disabled=!$('customMargins').checked;
- try{const rawInput=getInput();if(typeof readBambuTemplate==='function')rawInput.sectionTemplateInfo=BambuTemplate.validate(readBambuTemplate());const o=FrameV3.derive(rawInput);current=o;$('err').textContent='';if(light)$('lightDepthHint').textContent='Frame depth / print height: '+fmt(o.d)+' mm, including the front lip and rear retainers.';if(borderless)$('borderlessHint').textContent='Uniform visible border: '+fmt(o.b)+' mm per side, including '+fmt(o.ov)+' mm artwork overlap. Panel face sits '+fmt(o.front)+' mm behind the common front plane. Compact depth: '+fmt(o.d)+' mm. Rear frame springs: '+(o.frameSpringsEnabled?'Enabled ('+o.frontRetention.rearFlexureCount+' relief windows).':'Disabled (solid rear perimeter; insertion may require more force).')+' Shared keyhole entry inset: '+fmt(o.wallHangerInsetsByOrientation.portrait)+' mm (portrait), '+fmt(o.wallHangerInsetsByOrientation.landscape)+' mm (landscape). Print rear-face-down and test the closed-border coupon first.';if(typeof updatePlatePackaging==='function')updatePlatePackaging();setExports(false);schedulePreview(o);}
+ try{const rawInput=getInput();if(typeof readBambuTemplate==='function')rawInput.sectionTemplateInfo=BambuTemplate.validate(readBambuTemplate());current=null;$('err').textContent='';schedulePreview(rawInput);setExports(false);}
  catch(e){current=null;$('err').textContent=e.message;setExports(false);invalidPreview();}
 }
+function applyDerivedSettings(o){
+ if(o.isLight)$('lightDepthHint').textContent='Frame depth / print height: '+fmt(o.d)+' mm, including the front lip and rear retainers.';
+ if(o.isBorderless)$('borderlessHint').textContent='Uniform visible border: '+fmt(o.b)+' mm per side, including '+fmt(o.ov)+' mm artwork overlap. Panel face sits '+fmt(o.front)+' mm behind the common front plane. Compact depth: '+fmt(o.d)+' mm. Rear frame springs: '+(o.frameSpringsEnabled?'Enabled ('+o.frontRetention.rearFlexureCount+' relief windows).':'Disabled (solid rear perimeter; insertion may require more force).')+' Shared keyhole entry inset: '+fmt(o.wallHangerInsetsByOrientation.portrait)+' mm (portrait), '+fmt(o.wallHangerInsetsByOrientation.landscape)+' mm (landscape). Print rear-face-down and test the closed-border coupon first.';
+ if(typeof updatePlatePackaging==='function')updatePlatePackaging();
+}
+
 function populate(o,raw){
  const baseText=o.panelCount?o.panelCount+' tile'+(o.panelCount===1?'':'s'):o.printedPanel?'Does not fit':'Existing panel';
  $('stats').innerHTML='<div class="countgrid"><div><strong>'+o.count+'</strong>Frame sections</div><div><strong>'+o.frameJointCount+'</strong>Frame joints</div><div><strong>'+o.panelCount+'</strong>Base tiles</div></div><div class="summaryline">'+o.totalCount+' parts total'+(o.faceplateCount?' | '+o.faceplateCount+' faceplates':'')+(o.includeStand?(o.isBorderless?' | 1 breakaway easel included':' | 2 rear supports'):'')+'</div>';
@@ -150,7 +156,9 @@ function updateAssemblyViewNotice(){
  $('assemblyViewNotice').hidden=!visible;
  $('assemblyViewText').textContent='Exploded view: '+fmt(amount)+' mm. Parts are separated for inspection; this is not their assembled position. Exports remain assembled or print-arranged.';
 }
-function refreshScene(reset=true){if(!MODEL)return;updateAssemblyViewNotice();updateMeasurements(MODEL.params);SCENE=sceneFromRaw();updateBuffers();if(reset)fitView();else{calculateFit();redraw();}setExports(!!current);}
+let sceneRefreshFrame=0,sceneRefreshHost=null;
+function queueSceneRefresh(){if(sceneRefreshFrame)return;sceneRefreshHost=canvas.ownerDocument.defaultView||window;sceneRefreshFrame=sceneRefreshHost.requestAnimationFrame(()=>{sceneRefreshFrame=0;refreshScene(false);});}
+function refreshScene(reset=true){if(sceneRefreshFrame){sceneRefreshHost.cancelAnimationFrame(sceneRefreshFrame);sceneRefreshFrame=0;}if(!MODEL)return;updateAssemblyViewNotice();updateMeasurements(MODEL.params);SCENE=sceneFromRaw();updateBuffers();if(reset)fitView();else{calculateFit();redraw();}setExports(!!current);}
 function save(content,name,type='application/octet-stream'){const b=content instanceof Blob?content:new Blob([content],{type}),url=URL.createObjectURL(b),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),20000);}
 function crc32(data){let c=0xffffffff;for(let b of data){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0);}return(c^0xffffffff)>>>0;}
 function zip(files){let out=[],central=[],offset=0,enc=new TextEncoder();const now=new Date(),dd=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate(),dt=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);function hdr(n){let b=new Uint8Array(n);return[b,new DataView(b.buffer)];}
@@ -320,7 +328,7 @@ $('swap').onclick=()=>{const w=$('w').value;$('w').value=$('h').value;$('h').val
 $('partSelect').onchange=()=>refreshScene();
 $('standPrintView').onclick=()=>{if(MODEL?.params.isBorderless){const i=RAW.findIndex(p=>p.includesBreakawayStand);$('partSelect').value=$('partSelect').value===String(i)?'all':String(i>=0?i:0);refreshScene();return;}const selected=RAW[Number($('partSelect').value)];if(selected?.type==='foot'){$('partSelect').value='all';refreshScene();presetView(-.44,.18);}else{$('partSelect').value=String(RAW.findIndex(p=>p.type==='foot'));refreshScene();presetView(0,0);}};
 $('resetAssemblyView').onclick=()=>{$('explode').value='0';$('partSelect').value='all';isLoading=false;$('loadView').setAttribute('aria-pressed','false');refreshScene();};
-$('explode').oninput=()=>{$('explodeValue').textContent=fmt(Number($('explode').value))+' mm';refreshScene(false);};$('loadView').onclick=()=>{isLoading=!isLoading;if(isLoading)$('panelToggle').checked=true;$('loadView').setAttribute('aria-pressed',String(isLoading));$('loadView').textContent=isLoading?'Seat panel':'Load panel';$('partSelect').value='all';refreshScene();};
+$('explode').oninput=()=>{$('explodeValue').textContent=fmt(Number($('explode').value))+' mm';queueSceneRefresh();};$('loadView').onclick=()=>{isLoading=!isLoading;if(isLoading)$('panelToggle').checked=true;$('loadView').setAttribute('aria-pressed',String(isLoading));$('loadView').textContent=isLoading?'Seat panel':'Load panel';$('partSelect').value='all';refreshScene();};
 
 $('panelSource').onchange=$('panelSplit').onchange=$('standType').onchange=$('frameStyle').onchange=$('faceplateStyle').onchange=$('displayOrientation').onchange=update;
 $('customMargins').onchange=()=>{if($('customMargins').checked)for(let id of ['marginLeft','marginRight','marginFront','marginBack'])$(id).value=$('margin').value;update();};

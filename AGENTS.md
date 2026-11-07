@@ -28,3 +28,11 @@ This repository follows the shared TechSavage1989 standard in [`docs/REPOSITORY_
 - **Instructions:** this file is the single source of project rules for every tool; `CLAUDE.md` imports it. Add new rules and gotchas here.
 
 Where this file's project-specific rules differ from the shared standard, this file wins; an enforced check script wins over both.
+
+## Preview generation and source synchronization (3.51.16)
+
+- Edit cad_source, regenerate browser HTML with python cad_source/build_html.py, then run node scripts/sync-builder.cjs. Commit both generated HTML files. The generator writes only into browser/, not the repository root.
+- Preview workers reuse the embedded geometry source and shared preview_build.js; do not create a second copy of geometry logic. Keep worker-src blob: in the desktop CSP while network connections remain blocked.
+- Preserve the historical STL header already present in released generated HTML when regenerating source; changing that label changes every export digest even when geometry is identical.
+- scripts/preview-integration.cjs runs through the native Windows suite and checks real worker cancellation, fallback, export gating and slider coalescing.
+- The README gallery intentionally covers every main feature, a documented exception to the shared 2-4-image guideline. Recapture affected images when the UI changes.
