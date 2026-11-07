@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "product": "Frame Builder",
+  "appId": "com.techsavage3d.canvasframe",
+  "version": "3.51.17",
+  "tag": "v3.51.17",
+  "releaseSourceCommit": "14be26a70a17fa57c55cb763981f21a4fbef5803",
+  "repository": "https://github.com/TechSavage1989/Frame-Builder",
+  "visibility": "public",
+  "feed": "https://api.github.com/repos/TechSavage1989/Frame-Builder/releases/latest",
+  "previousVersion": "3.51.16",
+  "sourceCiRun": 42349347109,
+  "releaseRun": 42349348335,
+  "sourceTestCount": 22,
+  "status": "PASSED",
+  "change": "Viewer heading renamed to \"3D preview\" and displayed/package version updated for a fresh updater test",
+  "nativeChecks": [
+    {
+      "name": "visible responsive isolated window",
+      "passed": true
+    },
+    {
+      "name": "native IPC banner reports failed check and Retry-After cooldown",
+      "passed": true
+    },
+    {
+      "name": "original native 3D preview",
+      "triangles": 43184,
+      "passed": true
+    },
+    {
+      "name": "solid native 3D preview",
+      "triangles": 48762,
+      "passed": true
+    },
+    {
+      "name": "light native 3D preview",
+      "triangles": 50768,
+      "passed": true
+    },
+    {
+      "name": "borderless native 3D preview",
+      "triangles": 72358,
+      "passed": true
+    },
+    {
+      "name": "spring option and active-operation guard",
+      "passed": true
+    },
+    {
+      "name": "background preview stays responsive, cancels stale builds and guards exports",
+      "ticks": 124,
+      "passed": true
+    },
+    {
+      "name": "exploded-view input coalesces without rebuilding geometry",
+      "passed": true
+    },
+    {
+      "name": "invalid dimensions retain last valid model and recover cleanly",
+      "passed": true
+    },
+    {
+      "name": "worker fallback preserves exact STL output and recovers",
+      "passed": true
+    },
+    {
+      "name": "detached viewer and return",
+      "passed": true
+    },
+    {
+      "name": ".stl export through native download handler",
+      "bytes": 1123184,
+      "passed": true
+    },
+    {
+      "name": ".step export through native download handler",
+      "bytes": 438222,
+      "passed": true
+    },
+    {
+      "name": ".3mf export through native download handler",
+      "bytes": 141749,
+      "passed": true
+    },
+    {
+      "name": "production two-minute focus and five-minute unfocused native timer",
+      "elapsedMilliseconds": [
+        0,
+        120706,
+        299997
+      ],
+      "passed": true
+    }
+  ],
+  "directInstallerChecks": [
+    {
+      "name": "Windows PowerShell encoding negative control and UTF-8 correction",
+      "passed": true
+    },
+    {
+      "name": "actual native file lock delays replacement until released",
+      "passed": true
+    },
+    {
+      "name": "download, digest, target-volume staging, visible relaunch and deferred cleanup",
+      "passed": true
+    },
+    {
+      "name": "accented custom executable filename survives installation",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "interrupted new window restores and restarts exact previous executable",
+      "passed": true
+    },
+    {
+      "name": "cross-volume download to target staging",
+      "crossVolume": true,
+      "passed": true
+    }
+  ],
+  "uiChecks": [
+    {
+      "name": "previous portable app discovers actual stable release from configured feed",
+      "passed": true
+    },
+    {
+      "name": "actual install control refuses to restart during active export",
+      "passed": true
+    },
+    {
+      "name": "real previous-to-new UI installation preserves settings, window size, custom filename and shortcut target",
+      "passed": true
+    }
+  ],
+  "uiInstalledFilename": "Frame Builder.exe",
+  "uiDownloadForcedFresh": true,
+  "helperLogsAndMarkersCleanupChecked": true,
+  "cadBaseline": {
+    "version": "3.51.6",
+    "geometryAndUpdaterRuntimeUnchangedFrom": "3.51.16",
+    "sourceComparison": "Generated browser HTML changes only the viewer label; desktop HTML also updates the title and installed-version label."
+  },
+  "assets": [
+    {
+      "name": "Frame_Builder_3.51.17_Windows_x64.exe",
+      "bytes": 100234494,
+      "sha256": "101e3dbaca1b5c519613f501f882e35b1a2155f1b995c28ae20c5cce98b8e58d",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.17/Frame_Builder_3.51.17_Windows_x64.exe"
+    },
+    {
+      "name": "Frame_Builder_3.51.17_Windows_x64.zip",
+      "bytes": 100243631,
+      "sha256": "5f757a5dc8df864fd01eb3d42ecc5ed67daf9ae20667ee2aa7e963c35463f754",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.17/Frame_Builder_3.51.17_Windows_x64.zip"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 298,
+      "sha256": "ac111a869d59534c4c5d8a665152de23e50ed0fbb5cd5cdee02d44f855960132",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.17/SHA256SUMS.txt"
+    },
+    {
+      "name": "update-manifest.json",
+      "bytes": 896,
+      "sha256": "fad9b76427a8b3d6885ede5ce4da367d0627bc6d2258fa565e48f17ce0c55bea",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.17/update-manifest.json"
+    }
+  ],
+  "environment": {
+    "target": "Windows x64 portable",
+    "hostedRunner": "Microsoft Windows Server 2025",
+    "runnerImage": "windows-2025-vs2026",
+    "runnerImageVersion": "20261103.298.1"
+  },
+  "limitations": [
+    "Unsigned; digest verification is not publisher-signature verification",
+    "User PC not tested; the previously reported failure has not been reproduced",
+    "No new physical print/fit/load tests",
+    "Temporary remote branch deletion is unavailable through the connected GitHub tools"
+  ],
+  "verifiedAt": "2026-11-07T07:14:41.394Z"
+}

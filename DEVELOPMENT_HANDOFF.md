@@ -1,16 +1,19 @@
 # Frame Builder development handoff
 
-## Candidate 3.51.17 (2026-11-07)
+## Current verified state (2026-11-07)
 
-- Owner manually installed 3.51.16 and requested another small published update to test the updater.
-- Candidate 3.51.17 changes only the viewer heading to "3D preview" and the displayed/package version. No updater runtime or geometry changes.
-- The hosted actual-UI fixture now installs from 3.51.16 using the standard "Frame Builder.exe" target. Direct installer/rollback checks retain the accented custom filename.
-- release-validation.json requires a fresh 3.51.16-to-3.51.17 update, with no reused installer evidence. Current screenshots were recaptured from the generated app.
-- Windows CI and publication are pending. The previous user-PC failure remains unconfirmed: the supplied install.log contains an older successful installation, not evidence of the reported failure.
+- Latest validated desktop release: 3.51.17, tag v3.51.17, immutable source 14be26a70a17fa57c55cb763981f21a4fbef5803. The public stable feed points to this release.
+- Owner manually installed 3.51.16 and requested another small published update to test the updater. Version 3.51.17 changes only the viewer heading to "3D preview" and the displayed/package version. No updater runtime or geometry changes.
+- Exact-source Windows CI passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42349347109. All 16 native checks passed; focus/background timers ran at 120706 and 299997 ms.
+- Hosted release verification passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42349348335. Verified the actual hosted tag, assets, digests, ZIP contents, native file locking, target-volume staging, accented custom filename, visible restart and failed-launch rollback.
+- Fresh actual 3.51.16-to-3.51.17 UI download and installation passed with the exact target "Frame Builder.exe". Settings, window size, shortcut target and cleanup were preserved. No previous installer run was reused.
+- Immutable evidence and all asset digests are in validation/RELEASE_VERIFICATION_3.51.17.json. Current screenshots were recaptured from the generated app.
+- The previous user-PC failure remains unconfirmed: the supplied install.log contains an older successful installation, not evidence of the reported failure. This is a test update, not an asserted fix for that unobserved failure.
+- Remote branch cleanup is still unavailable through the connected GitHub tools. Current task branches are chore/updater-test-3.51.17, release/3.51.17 and docs/verify-3.51.17. Earlier feat/responsive-preview, release/3.51.16 and docs/verify-3.51.16 also remain. Local task branches are removed after matching the merged tree; do not repeat the timed-out browser fallback.
 
-## Previous verified state (2026-11-07)
+## Previous 3.51.16 verification (2026-11-07)
 
-- Latest validated desktop release: 3.51.16, tag v3.51.16, immutable application source 1a4d688447408586a63f80a0c8fd70442f7d26f4. The public stable feed points to this release.
+- Previous validated desktop release: 3.51.16, tag v3.51.16, immutable application source 1a4d688447408586a63f80a0c8fd70442f7d26f4. The public stable feed pointed to this release before 3.51.17.
 - Exact-source Windows CI passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344553672. Hosted release and actual 3.51.15-to-3.51.16 UI update passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344566211.
 - Native installation, file-lock wait, accented custom filename, cross-volume staging, failed-launch rollback, settings/window/shortcut continuity and cleanup passed. Evidence and asset digests are in validation/RELEASE_VERIFICATION_3.51.16.json. Production focus/background timers passed at 120705 and 299998 ms.
 - Preview planning and meshing now run in an offline Blob worker. A revision guard and worker termination discard superseded requests; the fallback yields between parts when workers are unavailable. Exports stay disabled while pending or invalid, with the last valid preview retained.
@@ -90,7 +93,7 @@ npm run build:windows
 - Validation covers HTTPS repository/asset allowlists, size/SHA-256, PE format, exact product/version and release identity. Update ZIPs are not accepted.
 - NSIS can use an x86 outer container for the x64 Electron application. Do not reject the correct portable wrapper solely because its outer PE machine is x86.
 - Installer uses Windows PowerShell 5.1, explicit UTF-8 job reading, direct .NET SHA-256 and native module discovery. This avoids inherited PowerShell 7 module-path problems.
-- Native negative controls: run 40184288439 shows detached PowerShell exits before preparation; actual UI run 40184559145 shows a directly attached helper dies when the GUI closes. Final independent-launcher lifecycle probe 40186547952 uses immutable 3.51.12, closes its actual GUI/portable parent, then verifies helper survival, replacement, a different visible healthy renderer and staging cleanup. This same-version diagnostic is not the genuine version migration. The historical 3.51.14 release gate separately verified 3.51.13 to 3.51.14; the current gate verifies 3.51.14 to 3.51.15.
+- Native negative controls: run 40184288439 shows detached PowerShell exits before preparation; actual UI run 40184559145 shows a directly attached helper dies when the GUI closes. Final independent-launcher lifecycle probe 40186547952 uses immutable 3.51.12, closes its actual GUI/portable parent, then verifies helper survival, replacement, a different visible healthy renderer and staging cleanup. This same-version diagnostic is not the genuine version migration. The historical 3.51.14 release gate separately verified 3.51.13 to 3.51.14; the current gate verifies 3.51.16 to 3.51.17.
 - app/update-launch.cjs uses a short-lived Windows PowerShell bootstrap with Start-Process, native module precedence, a per-user working directory and redirected logs. It returns the actual independent helper PID. The GUI requires a matching live helper-ready record before exiting. Do not replace it with direct attached or detached Electron child-process launch.
 - scripts/launch-matrix.cjs intentionally pins historical 3.51.10; scripts/launch-lifecycle.cjs intentionally pins historical 3.51.12. Both run only in isolated GitHub Windows CI and enable loopback debugging explicitly for the test. Production enables no debugger.
 
@@ -100,7 +103,7 @@ npm run build:windows
 2. Update release notes, manifest notes and "release-validation.json". Set previousVersion to the appropriate prior updater-capable release; remove any old verifiedInstallerRun when application/version changes.
 3. Sync authorized source to main and confirm hosted CI.
 4. Create/update an unpublished matching "release/<version>" branch or run Windows Release from main.
-5. The workflow builds a prerelease, checks its exact source/tag/assets/hashes and native behavior, then promotes only after installer verification. Failed final UI validation demotes it again. A deliberate bootstrap=true config keeps an initial update-capable preview prerelease and skips stable/UI promotion; the delivered 3.51.15 config has no bootstrap flag and sets previousVersion to 3.51.14.
+5. The workflow builds a prerelease, checks its exact source/tag/assets/hashes and native behavior, then promotes only after installer verification. Failed final UI validation demotes it again. A deliberate bootstrap=true config keeps an initial update-capable preview prerelease and skips stable/UI promotion; the delivered 3.51.17 config has no bootstrap flag and sets previousVersion to 3.51.16.
 6. Existing assets may be reverified after test/workflow repairs only if all production source/package/build identity matches the tag. Assets and tags remain immutable.
 7. Recorded native installer tests can be reused only after validating the referenced job step succeeded, its production source matches, and its previous version matches. Final actual UI update still runs.
 8. Allow the public stable feed to propagate after promotion. Verification uses normal backoff and logs unavailable feed responses rather than claiming current.
