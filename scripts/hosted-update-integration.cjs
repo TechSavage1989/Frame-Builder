@@ -19,7 +19,7 @@ const storage=path.join(roaming,'Canvas Frame Builder','updates');
 fs.mkdirSync(storage,{recursive:true});
 const testRoot=path.resolve('validation/runtime/install-'+mode);
 fs.mkdirSync(testRoot,{recursive:true});
-const target=path.join(testRoot,mode==='direct'?'User Named Främé.exe':'User Named Frame.exe');
+const target=path.join(testRoot,mode==='direct'?'User Named Främé.exe':'Frame Builder.exe');
 const shortcut=path.join(testRoot,'Frame Builder.lnk');
 const checks=[];
 let diagnosticJob=null,diagnosticOldPid=null;

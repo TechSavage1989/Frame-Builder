@@ -81,20 +81,20 @@ The application is **not code signed**. Release checksums verify integrity again
 
 ## How to use
 
-- **Explore the model:** rotate, pan, zoom or inspect an individual part. Camera, visibility and exploded views do not change exported geometry.
+- **Explore the 3D preview:** rotate, pan, zoom or inspect an individual part. Camera, visibility and exploded views do not change exported geometry.
 - **Use a second window:** choose **Detach** for the live viewer. Keep the builder open; closing the detached window returns the viewer.
 - **Choose an output:** STL for print geometry, STEP for CAD solids, or 3MF for arranged plates. Review the selected 3MF packaging before slicing.
 - **Find assembly guidance:** use **Assembly & help** and the model's **Assembly** details.
 
 ## Updates and settings
 
-Open **Help → Check for updates**. If a newer stable release is available, choose **Download**, save your work, then **Install and restart**.
+Open **Help > Check for updates**. If a newer stable release is available, choose **Download**, save your work, then **Install and restart** and confirm the restart prompt. The installed version appears beside the builder title.
 
 Checks run at startup, every five minutes while online, and on a focus return after at least two minutes since the last check. **Downloads and restarts require your action.** Active model/export work blocks restart; failed/offline checks leave online status unknown.
 
 - Coming from **3.51.6 or a preview through 3.51.12**? Install the portable ZIP manually first.
 - Preferences and window bounds remain in `%APPDATA%\Canvas Frame Builder`.
-- The updater preserves the exact EXE path, including custom filenames and shortcut targets, and keeps one rollback backup in per-user storage.
+- The updater replaces "Frame Builder.exe" in its existing folder. It also preserves custom filenames and shortcut targets, and keeps one rollback backup in per-user storage. The versioned GitHub EXE name is only the download name.
 
 ## Troubleshooting
 
