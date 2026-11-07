@@ -1,17 +1,22 @@
 # Frame Builder development handoff
 
-## Responsiveness and polish candidate (2026-11-07)
+## Current verified state (2026-11-07)
 
-- Application candidate: 3.51.16. The latest validated published release remains 3.51.15 until the new Windows release workflow completes.
+- Latest validated desktop release: 3.51.16, tag v3.51.16, immutable application source 1a4d688447408586a63f80a0c8fd70442f7d26f4. The public stable feed points to this release.
+- Exact-source Windows CI passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344553672. Hosted release and actual 3.51.15-to-3.51.16 UI update passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344566211.
+- Native installation, file-lock wait, accented custom filename, cross-volume staging, failed-launch rollback, settings/window/shortcut continuity and cleanup passed. Evidence and asset digests are in validation/RELEASE_VERIFICATION_3.51.16.json. Production focus/background timers passed at 120705 and 299998 ms.
 - Preview planning and meshing now run in an offline Blob worker. A revision guard and worker termination discard superseded requests; the fallback yields between parts when workers are unavailable. Exports stay disabled while pending or invalid, with the last valid preview retained.
 - FrameV3.make performs derivation once. The main UI no longer repeats that planning on every keystroke. Rendering uses direct typed buffers and fewer temporary arrays; explode input is coalesced per animation frame.
 - Shorter export labels, redundant viewer badges removed, and a wrapping narrow-window header. Current screenshots were recaptured from the real generated app.
 - All four default styles plus an 18 x 24 in tiled model retain exactly matching STL bytes and triangle counts against the previous application. Local timing evidence is in validation/PREVIEW_RESPONSIVENESS_3.51.16.json. Measurements describe one local browser run, not a general build-speed guarantee.
-- Existing 22 source checks pass. Added native integration coverage for responsive timers, cancellation, export gating, invalid-input recovery, slider coalescing and byte-identical worker fallback. Windows CI and hosted installation/rollback evidence must pass before stable publication.
+- Existing 22 source checks pass. Added native integration coverage for responsive timers, cancellation, export gating, invalid-input recovery, slider coalescing and byte-identical worker fallback. These checks passed in exact-source Windows CI; hosted installation/rollback and the actual prior-app update also passed.
 - Build the maintained browser source with python cad_source/build_html.py, then node scripts/sync-builder.cjs. The browser filename retains the accepted CAD baseline version. The CAD source STL header was aligned with the historical 3.51.0 header already shipped in the generated app so regeneration preserves export bytes.
 - The expanded screenshot gallery is retained as a documented exception to the shared 2-4-image guideline because it was explicitly added for coverage of every main feature.
 
-## Current verified state (2026-10-25)
+- Published 3.51.16 manifest summaries retain the earlier release's short wording; the linked full release notes are accurate. The generator now derives summaries from current release notes for future releases. Existing tags/assets were not replaced. This generator/documentation follow-up does not change the released application.
+- Temporary remote branches could not be deleted because the GitHub connector has no branch-deletion operation and the browser fallback timed out. Cleanup remains for feat/responsive-preview, release/3.51.16 and the merged verification branch after this follow-up. The local feature branch was removed after checking its tree matched the merged source.
+
+## Previous release verification (2026-10-25)
 
 - Latest desktop release: Frame Builder 3.51.15, tag v3.51.15.
 - Immutable application source: 1ff64849330e780c9e102b70af14975e3b67119e.
@@ -34,7 +39,7 @@
 - Automatic/manual one-, two- and four-section planning, centered braces and hanger axes.
 - Preview, detachable viewer, STL/STEP/3MF output and Bambu X1C exclusions.
 - Browser source remains "browser/Canvas_Frame_v3_51_6_Builder_and_3D_Viewer.html". CAD source remains under "cad_source".
-- Desktop title, installed-version label and package/update version are 3.51.15. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
+- Desktop title, installed-version label and package/update version are 3.51.16. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
 - Fusion Builder 1.4.2 is distinct. Rejected later Borderless fold-flat designs remain excluded.
 
 ## Source, build and testing
@@ -55,10 +60,10 @@ npm run build:windows
 - 22 source checks pass, including corrupted downloads, unsafe URLs/identity/version, retry/backoff, ETag persistence, cleanup ownership and real short-duration scheduler checks.
 - Historical timeout and ETag-cache failures have negative controls. The Windows PowerShell missing-hash-command failure was reproduced in run 40178833753; corrected preflight passed in run 40178981099.
 - Native frame/export suite covers all four styles, frame-spring toggle, active export guard, detached viewer, STL/STEP/3MF and isolated renderer.
-- Full production native timing passed for this exact release source in run 40218549689: first check 0 ms after schedule binding, native focus return at 120709 ms, and background check at 300011 ms.
+- Full production native timing passed for the 3.51.16 release source in run 42344553672: first check 0 ms after schedule binding, native focus return at 120705 ms, and background check at 299998 ms.
 - CI reruns frame/export checks. It may reuse full timer evidence only after checking a passed parent CI and unchanged relevant production sources; otherwise it runs the full wall-clock suite.
-- Actual hosted installation/rollback passed in run 40218552668: held native file lock, accented custom filename, cross-volume staging, visible new window, forced-new-window failure, exact previous EXE restoration/restart and cleanup.
-- Final 3.51.14-to-3.51.15 UI update and preference checks passed in run 40218552668. Its fixture removes the cached payload so the actual Download button must fetch and verify fresh bytes; cleanup asserts both helper logs and all transaction markers are gone. These use the previous portable EXE, real public feed, Download, busy guard, native confirmation, install/relaunch and saved preference/window/shortcut checks.
+- Actual hosted installation/rollback passed in run 42344566211: held native file lock, accented custom filename, cross-volume staging, visible new window, forced-new-window failure, exact previous EXE restoration/restart and cleanup.
+- Final 3.51.15-to-3.51.16 UI update and preference checks passed in run 42344566211. Its fixture removes the cached payload so the actual Download button must fetch and verify fresh bytes; cleanup asserts both helper logs and all transaction markers are gone. These use the previous portable EXE, real public feed, Download, busy guard, native confirmation, install/relaunch and saved preference/window/shortcut checks.
 - Native integration scripts are for isolated test accounts/CI. Hosted updater integration explicitly requires a GitHub Windows runner.
 - Prior-baseline local CAD regressions passed for all section choices, 13 spring/legacy cases and 15 reserved-bed safeguards. Those geometry sources are byte-identical in 3.51.15; the hosted native suite rechecked all four previews and exports. Commands: node cad_source/check_all_frame_sections.cjs; node cad_source/check_frame_springs.cjs; node cad_source/check_reserved_beds.cjs. Legacy reserved-bed scripts may write generated reports under Validation; keep those outputs out of releases.
 
@@ -93,7 +98,7 @@ npm run build:windows
 8. Allow the public stable feed to propagate after promotion. Verification uses normal backoff and logs unavailable feed responses rather than claiming current.
 9. Update this handoff and AGENTS.md after completion. Preserve exact release source, CI evidence, hashes and limitations.
 
-## Verified asset digests
+## Historical 3.51.15 asset digests
 
 | Asset | Bytes | SHA-256 |
 | --- | ---: | --- |

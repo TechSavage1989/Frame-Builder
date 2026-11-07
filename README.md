@@ -125,7 +125,7 @@ npm run build:windows
 - `cad_source/`: CAD/model source and regression checks.
 - `browser/Canvas_Frame_v3_51_6_Builder_and_3D_Viewer.html`: standalone browser baseline, not the current desktop updater.
 
-[Release 3.51.15 verification](https://github.com/TechSavage1989/Frame-Builder/actions/runs/40218552668) covers the actual 3.51.14 → 3.51.15 update, Windows installation/rollback, saved preferences and shortcut continuity. Exact source, hashes and remaining limits are recorded in the handoff. No new physical print/fit/load testing is claimed.
+[Release 3.51.16 verification](https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344566211) covers the actual 3.51.15 to 3.51.16 update, Windows installation/rollback, saved preferences and shortcut continuity. Exact source, hashes and remaining limits are recorded in the handoff. No new physical print/fit/load testing is claimed.
 
 The desktop preserves the accepted Canvas Frame Builder 3.51.6 geometry. Fusion Builder is separate; rejected later Borderless fold-flat prototypes are excluded. macOS/Linux desktop packaging is not provided.
 

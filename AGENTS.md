@@ -2,7 +2,7 @@
 
 1. Read DEVELOPMENT_HANDOFF.md before changing source, distribution, build scripts, or releases.
 2. Canonical repository is https://github.com/TechSavage1989/Frame-Builder. It is public. Public source and compiled releases are owner-approved. Do not change visibility or choose a license without a separate request.
-3. Latest validated desktop release is Frame Builder 3.51.15, tag v3.51.15, application source 1ff64849330e780c9e102b70af14975e3b67119e. Last accepted CAD baseline is Canvas Frame Builder 3.51.6. Start from maintained source and read the handoff, not an older ZIP.
+3. Latest validated desktop release is Frame Builder 3.51.16, tag v3.51.16, application source 1a4d688447408586a63f80a0c8fd70442f7d26f4. Last accepted CAD baseline is Canvas Frame Builder 3.51.6. Start from maintained source and read the handoff, not an older ZIP.
 4. Preserve all four frame styles, reinforced UV-panel joints, optional Front Snap frame springs, centered braces and mounts, accepted stand designs, bed exclusions, preview, saved preferences, and STL/STEP/3MF exports.
 5. Stable installed name is Frame Builder.exe; retain the actual existing filename when customized. Keep settings, logs, cache, downloads, staging records and one rollback backup in the legacy per-user Canvas Frame Builder storage. Target-volume staging is transient.
 6. Check automatically but never download, install or restart without user action. Guard active operations. Offline and failed checks must remain unknown, never up to date.
@@ -36,3 +36,5 @@ Where this file's project-specific rules differ from the shared standard, this f
 - Preserve the historical STL header already present in released generated HTML when regenerating source; changing that label changes every export digest even when geometry is identical.
 - scripts/preview-integration.cjs runs through the native Windows suite and checks real worker cancellation, fallback, export gating and slider coalescing.
 - The README gallery intentionally covers every main feature, a documented exception to the shared 2-4-image guideline. Recapture affected images when the UI changes.
+
+- Release manifest summaries are derived from docs/releases/RELEASE_NOTES.md. Keep those notes current in the release PR. Never edit already-published assets to correct summary wording.
