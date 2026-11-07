@@ -38,3 +38,9 @@ Where this file's project-specific rules differ from the shared standard, this f
 - The README gallery intentionally covers every main feature, a documented exception to the shared 2-4-image guideline. Recapture affected images when the UI changes.
 
 - Release manifest summaries are derived from docs/releases/RELEASE_NOTES.md. Keep those notes current in the release PR. Never edit already-published assets to correct summary wording.
+
+## Pending updater test release (3.51.17)
+
+- Owner requested a small visible test update after manually installing 3.51.16. The viewer heading now reads "3D preview"; runtime/geometry behavior is unchanged.
+- Actual hosted update UI tests use the exact standard filename "Frame Builder.exe". Direct native tests retain accented custom-name coverage.
+- Publish only after the existing Windows CI and fresh 3.51.16-to-3.51.17 release gates pass. Record the final immutable source and evidence in the handoff.

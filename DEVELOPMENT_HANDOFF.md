@@ -1,6 +1,14 @@
 # Frame Builder development handoff
 
-## Current verified state (2026-11-07)
+## Candidate 3.51.17 (2026-11-07)
+
+- Owner manually installed 3.51.16 and requested another small published update to test the updater.
+- Candidate 3.51.17 changes only the viewer heading to "3D preview" and the displayed/package version. No updater runtime or geometry changes.
+- The hosted actual-UI fixture now installs from 3.51.16 using the standard "Frame Builder.exe" target. Direct installer/rollback checks retain the accented custom filename.
+- release-validation.json requires a fresh 3.51.16-to-3.51.17 update, with no reused installer evidence. Current screenshots were recaptured from the generated app.
+- Windows CI and publication are pending. The previous user-PC failure remains unconfirmed: the supplied install.log contains an older successful installation, not evidence of the reported failure.
+
+## Previous verified state (2026-11-07)
 
 - Latest validated desktop release: 3.51.16, tag v3.51.16, immutable application source 1a4d688447408586a63f80a0c8fd70442f7d26f4. The public stable feed points to this release.
 - Exact-source Windows CI passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344553672. Hosted release and actual 3.51.15-to-3.51.16 UI update passed: https://github.com/TechSavage1989/Frame-Builder/actions/runs/42344566211.
@@ -39,7 +47,7 @@
 - Automatic/manual one-, two- and four-section planning, centered braces and hanger axes.
 - Preview, detachable viewer, STL/STEP/3MF output and Bambu X1C exclusions.
 - Browser source remains "browser/Canvas_Frame_v3_51_6_Builder_and_3D_Viewer.html". CAD source remains under "cad_source".
-- Desktop title, installed-version label and package/update version are 3.51.16. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
+- Desktop title, installed-version label and package/update version are 3.51.17. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
 - Fusion Builder 1.4.2 is distinct. Rejected later Borderless fold-flat designs remain excluded.
 
 ## Source, build and testing
