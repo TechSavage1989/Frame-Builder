@@ -26,13 +26,15 @@ function updateBuffers(){
   if(gl)for(const mesh of meshes)gl.deleteBuffer(mesh.buffer);
   meshes=[];
   for(const obj of SCENE){
-    const data=[];obj.normals=[];
+    const data=gl?new Float32Array(obj.faces.length*18):null;let offset=0;obj.normals=gl?null:[];
     for(const face of obj.faces){
-      const a=obj.vertices[face[0]],b=obj.vertices[face[1]],c=obj.vertices[face[2]],u=b.map((k,i)=>k-a[i]),v=c.map((k,i)=>k-a[i]);
-      let n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],length=Math.hypot(...n)||1;n=n.map(k=>k/length);obj.normals.push(n);
-      if(gl)for(const p of [a,b,c])data.push(...p,...n);
+      const a=obj.vertices[face[0]],b=obj.vertices[face[1]],c=obj.vertices[face[2]];
+      const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+      let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const length=Math.hypot(nx,ny,nz)||1;nx/=length;ny/=length;nz/=length;
+      if(gl)for(const index of face){const p=obj.vertices[index];data[offset++]=p[0];data[offset++]=p[1];data[offset++]=p[2];data[offset++]=nx;data[offset++]=ny;data[offset++]=nz;}
+      else obj.normals.push([nx,ny,nz]);
     }
-    if(gl){const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);meshes.push({type:obj.type,buffer,count:data.length/6});}
+    if(gl){const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);meshes.push({type:obj.type,buffer,count:data.length/6});}
   }
 }
 function calculateFit(recenter=true){
@@ -42,33 +44,63 @@ function calculateFit(recenter=true){
   if(recenter)sceneCenter=lo.map((v,a)=>(v+hi[a])/2);
   // Keep the complete model inside the camera's near/far planes at every orbit
   // angle. Perspective uses a real homogeneous divide, not a skewed drawing.
-  let radius=1;
-  for(const obj of objects)for(const p of obj.vertices)radius=Math.max(radius,Math.hypot(...p.map((v,a)=>v-sceneCenter[a])));
+  let radiusSquared=1;
+  for(const obj of objects)for(const p of obj.vertices){const x=p[0]-sceneCenter[0],y=p[1]-sceneCenter[1],z=p[2]-sceneCenter[2];radiusSquared=Math.max(radiusSquared,x*x+y*y+z*z);}
+  const radius=Math.sqrt(radiusSquared);
   cameraDistance=Math.max(50,radius/Math.sin(Math.PI/8));
   cameraNear=Math.max(.1,cameraDistance-radius*1.05);cameraFar=cameraDistance+radius*1.05;
   let ex=1,ey=1,ez=1;
-  for(const obj of objects)for(const p of obj.vertices){const q=turn(p.map((v,a)=>v-sceneCenter[a])),factor=projection==='perspective'?cameraDistance/(cameraDistance+q[2]):1;ex=Math.max(ex,Math.abs(q[0]*factor));ey=Math.max(ey,Math.abs(q[1]*factor));ez=Math.max(ez,Math.abs(q[2]));}
+  const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+  for(const obj of objects)for(const p of obj.vertices){const x=p[0]-sceneCenter[0],y=p[1]-sceneCenter[1],z=p[2]-sceneCenter[2],tx=cy*x+sy*z,tz=-sy*x+cy*z,ty=cp*y-sp*tz,depth=sp*y+cp*tz,factor=projection==='perspective'?cameraDistance/(cameraDistance+depth):1;ex=Math.max(ex,Math.abs(tx*factor));ey=Math.max(ey,Math.abs(ty*factor));ez=Math.max(ez,Math.abs(depth));}
   const r=canvas.getBoundingClientRect();baseScale=Math.min(r.width*.88/(2*ex),r.height*.84/(2*ey));
   depthRange=Math.max(1500,Math.hypot(...hi.map((v,a)=>v-lo[a]))*2,ez*2);
 }
 function fitView(){zoom=1;panX=0;panY=0;calculateFit();redraw();}
 function setStatus(state,text){canvas.dataset.previewStatus=state;$('previewStatus').dataset.state=state;$('previewStatus').textContent=text;}
-function schedulePreview(o){
- clearTimeout(previewTimer);setStatus('updating','Updating');const next={...o};
- previewTimer=setTimeout(()=>{
-  if(!current)return;
-  try{
-   const sizeChanged=!lastPreview||lastPreview.w!==next.w||lastPreview.h!==next.h;
-   const model=FrameV3.make(next),cache=new WeakMap(),raw=model.parts.map(p=>{const m=FrameV3.mesh(p.spec,cache);FrameV3.validatePanelFront(p,m,model.params);const b=FrameV3.bounds(m),pm=FrameV3.printMesh(m,model.params,p);return {...p,mesh:m,displayMesh:p.displaySpec?FrameV3.mesh(p.displaySpec,cache):null,bounds:b,printMesh:pm,printBounds:FrameV3.bounds(pm),rotation:pm.rotation};});
-   MODEL=model;RAW=raw;populate(model.params,raw);SCENE=sceneFromRaw();updateBuffers();
-   if(sizeChanged){zoom=1;panX=0;panY=0;}calculateFit();lastPreview=model.params;
-   $('viewerSize').textContent='Panel: '+fmt(next.w)+' x '+fmt(next.h)+' x '+fmt(next.t)+' mm | Frame: '+fmt(next.ow)+' x '+fmt(next.oh)+' mm';
-   canvas.dataset.panelSize=[next.w,next.h,next.t].join(',');canvas.dataset.partCount=String(model.params.count);canvas.dataset.panelParts=String(model.params.panelCount);canvas.dataset.usableBed=[model.params.usableX,model.params.usableY].join(',');
-   setStatus('ready','Ready');setExports(true);redraw();
-  }catch(error){setStatus('error','Update failed');$('viewerSize').textContent=error.message+' The last valid view may still be visible.';setExports(false);console.error(error);}
- },100);
+let previewWorker=null,previewBusy=false,previewRevision=0;
+function cancelPreview(){
+ clearTimeout(previewTimer);previewRevision++;
+ if(previewBusy&&previewWorker){previewWorker.terminate();previewWorker=null;}
+ previewBusy=false;
 }
-function invalidPreview(){clearTimeout(previewTimer);setStatus('invalid','Check dimensions');$('viewerSize').textContent='Check the dimensions. The last valid model is shown.';}
+function schedulePreview(input){
+ cancelPreview();setStatus('updating','Updating model...');canvas.setAttribute('aria-busy','true');
+ const revision=previewRevision;
+ const fail=error=>{if(revision!==previewRevision)return;previewBusy=false;current=null;$('err').textContent=error.message;setStatus('invalid','Check settings');canvas.setAttribute('aria-busy','false');$('viewerSize').textContent='Check the settings. The last valid model is shown.';setExports(false);};
+ const accept=({model,raw})=>{
+  if(revision!==previewRevision)return;
+  previewBusy=false;
+  try{
+   const next=model.params,sizeChanged=!lastPreview||lastPreview.w!==next.w||lastPreview.h!==next.h;
+   MODEL=model;RAW=raw;current=next;applyDerivedSettings(next);populate(next,raw);SCENE=sceneFromRaw();updateBuffers();
+   if(sizeChanged){zoom=1;panX=0;panY=0;}calculateFit();lastPreview=next;
+   $('viewerSize').textContent='Panel: '+fmt(next.w)+' x '+fmt(next.h)+' x '+fmt(next.t)+' mm | Frame: '+fmt(next.ow)+' x '+fmt(next.oh)+' mm';
+   canvas.dataset.panelSize=[next.w,next.h,next.t].join(',');canvas.dataset.partCount=String(next.count);canvas.dataset.panelParts=String(next.panelCount);canvas.dataset.usableBed=[next.usableX,next.usableY].join(',');
+   setStatus('ready','Ready');canvas.setAttribute('aria-busy','false');setExports(true);redraw();
+  }catch(error){fail(error);}
+ };
+ const fallback=()=>{
+  canvas.dataset.previewEngine='cooperative';
+  buildPreview(input,()=>revision!==previewRevision,()=>new Promise(resolve=>setTimeout(resolve,0))).then(result=>{if(result)accept(result);},fail);
+ };
+ previewTimer=setTimeout(()=>{
+  previewBusy=true;
+  try{
+   if(typeof Worker==='undefined'){fallback();return;}
+   if(!previewWorker){
+    const source=document.getElementById('frameGeometrySource').textContent+'\n'+buildPreview.toString()+`\nonmessage=async e=>{try{const result=await buildPreview(e.data);postMessage({result});}catch(error){postMessage({error:error.message});}};`;
+    const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+    try{previewWorker=new Worker(url);}finally{URL.revokeObjectURL(url);}
+   }
+   canvas.dataset.previewEngine='worker';
+   previewWorker.onmessage=event=>{if(revision!==previewRevision)return;if(event.data.error)fail(new Error(event.data.error));else accept(event.data.result);};
+   previewWorker.onerror=event=>{event.preventDefault();if(revision!==previewRevision)return;previewWorker.terminate();previewWorker=null;fallback();};
+   previewWorker.postMessage(input);
+  }catch(error){if(previewWorker){previewWorker.terminate();previewWorker=null;}fallback();}
+ },120);
+}
+function invalidPreview(){cancelPreview();setStatus('invalid','Check dimensions');canvas.setAttribute('aria-busy','false');$('viewerSize').textContent='Check the dimensions. The last valid model is shown.';}
+window.addEventListener('pagehide',()=>{cancelPreview();if(previewWorker){previewWorker.terminate();previewWorker=null;}});
 function paintSoftware(){
   if(!softCtx)return;
   const r=canvas.getBoundingClientRect(),W=Math.max(1,Math.round(r.width)),H=Math.max(1,Math.round(r.height));
@@ -110,7 +142,6 @@ function selectProjection(mode){
   projection=mode;canvas.dataset.projection=mode;
   $('cameraOrtho').setAttribute('aria-pressed',String(mode==='orthographic'));
   $('cameraPerspective').setAttribute('aria-pressed',String(mode==='perspective'));
-  $('cameraBadge').textContent=mode==='orthographic'?'Orthographic':'Perspective';
   // Retain orbit, pan and user zoom. Only refit the projection's baseline scale.
   calculateFit();redraw();
 }
@@ -175,4 +206,4 @@ function observeViewport(){
 observeViewport();
 selectMode('rotate');selectProjection('orthographic');update();
 // Read-only diagnostics for support and regression testing.
-window.CanvasFrameViewer=Object.freeze({version:'3.51.0',geometryVersion:'3.51.0',getState:()=>({viewerLocation:canvas.ownerDocument===document?($('viewerPane').classList.contains('is-expanded')?'expanded':'embedded'):'detached',yaw,pitch,zoom,panX,panY,mode:activeMode,projection,cameraDistance,cameraNear,cameraFar,renderer:canvas.dataset.renderer,status:canvas.dataset.previewStatus,params:lastPreview?{...lastPreview}:null,parts:SCENE.length,triangles:SCENE.reduce((n,o)=>n+o.faces.length,0),center:[...sceneCenter],baseScale,frameParts:MODEL?MODEL.params.count:0,stlBounds:RAW.map(p=>({name:p.name,size:p.printBounds.size,rotation:p.rotation})),inspected:$('partSelect').value,explode:Number($('explode').value),loading:isLoading}),getModel:()=>MODEL,getMeshes:()=>RAW.map(p=>({name:p.name,type:p.type,mesh:p.mesh,bounds:p.bounds,printMesh:p.printMesh,printBounds:p.printBounds,rotation:p.rotation})),getScene:()=>SCENE.map(p=>({name:p.name,type:p.type,vertices:p.vertices,faces:p.faces}))});
+window.CanvasFrameViewer=Object.freeze({version:'3.51.0',geometryVersion:'3.51.0',getState:()=>({viewerLocation:canvas.ownerDocument===document?($('viewerPane').classList.contains('is-expanded')?'expanded':'embedded'):'detached',yaw,pitch,zoom,panX,panY,mode:activeMode,projection,cameraDistance,cameraNear,cameraFar,renderer:canvas.dataset.renderer,previewEngine:canvas.dataset.previewEngine,status:canvas.dataset.previewStatus,params:lastPreview?{...lastPreview}:null,parts:SCENE.length,triangles:SCENE.reduce((n,o)=>n+o.faces.length,0),center:[...sceneCenter],baseScale,frameParts:MODEL?MODEL.params.count:0,stlBounds:RAW.map(p=>({name:p.name,size:p.printBounds.size,rotation:p.rotation})),inspected:$('partSelect').value,explode:Number($('explode').value),loading:isLoading}),getModel:()=>MODEL,getMeshes:()=>RAW.map(p=>({name:p.name,type:p.type,mesh:p.mesh,bounds:p.bounds,printMesh:p.printMesh,printBounds:p.printBounds,rotation:p.rotation})),getScene:()=>SCENE.map(p=>({name:p.name,type:p.type,vertices:p.vertices,faces:p.faces}))});

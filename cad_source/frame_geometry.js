@@ -1754,7 +1754,7 @@ const FrameV3 = (() => {
   const vertices=m.vertices.map(p=>p.map((v,i)=>clean(v-b.min[i]))).map(p=>rotation===90?[clean(b.size[1]-p[1]),p[0],p[2]]:p);
   return {vertices,faces:m.faces,rotation};
  }
- function binarySTL(m){let bytes=new Uint8Array(84+m.faces.length*50),view=new DataView(bytes.buffer);let label=new TextEncoder().encode('Canvas Frame v3.51.6 | millimetres | 100 percent scale | supports off');bytes.set(label.slice(0,80));view.setUint32(80,m.faces.length,true);let k=84;
+ function binarySTL(m){let bytes=new Uint8Array(84+m.faces.length*50),view=new DataView(bytes.buffer);let label=new TextEncoder().encode('Canvas Frame v3.51.0 | millimetres | 100 percent scale | supports off');bytes.set(label.slice(0,80));view.setUint32(80,m.faces.length,true);let k=84;
   for(let f of m.faces){let [a,b,c]=f.map(i=>m.vertices[i]),u=b.map((v,i)=>v-a[i]),v=c.map((v,i)=>v-a[i]),n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(...n)||1;n=n.map(x=>x/l);for(let x of [...n,...a,...b,...c]){view.setFloat32(k,x,true);k+=4;}k+=2;}return bytes;
  }
  function scad(s){const a=x=>JSON.stringify(x);

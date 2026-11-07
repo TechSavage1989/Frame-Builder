@@ -52,6 +52,8 @@ async function run(win){
   assert.equal(await controller.operationBusy(),true);
   await evaluate('exportBusy=false');
   console.log('Native progress:',new Date().toISOString());checks.push({name:'spring option and active-operation guard',passed:true});
+  checks.push(...await require('./preview-integration.cjs')(evaluate,waitFor));
+  console.log('Native preview responsiveness checks passed:',new Date().toISOString());
   await evaluate("document.getElementById('detachViewer').click()");
   await waitFor(()=>evaluate("CanvasFrameWorkspace.getState().mode==='detached'"),'detached viewer',10000);
   assert(BrowserWindow.getAllWindows().some(w=>w!==win));
