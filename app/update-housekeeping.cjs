@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { isOwnedStage } = require('./update-staging.cjs');
 async function hashFile(file) {
   const hash = crypto.createHash('sha256');
   for await (const piece of fs.createReadStream(file)) hash.update(piece);
@@ -25,8 +26,8 @@ async function finishInstallJobs(storage) {
       if (!fs.existsSync(statusFile)) continue;
       const result = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
       if (result.id !== token || isRunning(result.helperPid)) continue;
-      const stage = path.join(path.dirname(job.target), '.frame-builder-update-' + token);
-      if (path.resolve(job.stage) !== path.resolve(stage)) continue;
+      if (!isOwnedStage(job)) continue;
+      const stage = job.stage;
       if (result.state === 'success') {
         if (await hashFile(job.target) !== job.sha256) continue;
         const prior = path.join(stage, 'previous.exe');

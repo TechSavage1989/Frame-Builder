@@ -4,7 +4,7 @@ $ErrorActionPreference='Stop'
 # A caller launched from PowerShell 7 can pass a module path that hides
 # Windows PowerShell's own modules. Prefer the native built-ins in this helper.
 $env:PSModulePath=[IO.Path]::Combine($PSHOME,'Modules')+[IO.Path]::PathSeparator+$env:PSModulePath
-$job=$null; $swapped=$false; $child=$null; $owned=@{}; $parentExited=$false
+$job=$null; $swapped=$false; $child=$null; $owned=@{}; $parentExited=$false; $stageCreated=$false
 function Write-Json([string]$file, $value) {
   $temp=$file+'.tmp'
   [IO.File]::WriteAllText($temp, ($value | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding($false)))
@@ -24,6 +24,39 @@ function HashOK([string]$file,[string]$hash) {
 }
 function Assert-Absolute([string]$file) {
   if($file -notmatch '^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+\\)' -or [IO.Path]::GetFullPath($file) -ine $file) { throw 'Installer paths must be canonical absolute Windows paths' }
+}
+function Volume-Root([string]$file) {
+  if(-not ('FrameUpdateVolume' -as [type])){
+    Add-Type -TypeDefinition @'
+using System;
+using System.Text;
+using System.Runtime.InteropServices;
+public static class FrameUpdateVolume {
+  [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+  public static extern bool GetVolumePathName(string file, StringBuilder volume, uint length);
+  [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+  public static extern bool GetVolumeNameForVolumeMountPoint(string mount, StringBuilder volume, uint length);
+}
+'@
+  }
+  $buffer=New-Object Text.StringBuilder 32768
+  if(-not [FrameUpdateVolume]::GetVolumePathName($file,$buffer,$buffer.Capacity)){throw 'Unable to resolve update target volume'}
+  return $buffer.ToString()
+}
+function Volume-Id([string]$file) {
+  $root=Volume-Root $file
+  $buffer=New-Object Text.StringBuilder 1024
+  if(-not [FrameUpdateVolume]::GetVolumeNameForVolumeMountPoint($root,$buffer,$buffer.Capacity)){throw 'Unable to identify update target volume'}
+  return $buffer.ToString()
+}
+function Remove-RestoredStage {
+  # Older clients do not recognize the new staging location. Once the exact
+  # previous EXE is restored, remove our staging even if that client rolls back.
+  # Keep per-user result/log records for diagnostics and later housekeeping.
+  if($stageCreated -and (HashOK $job.target $job.oldSha256)){
+    try {Remove-Item -LiteralPath $job.stage -Recurse -Force -ErrorAction Stop}
+    catch {Log ('Staging cleanup deferred: '+[string]$_)}
+  }
 }
 function Assert-PE([string]$file) {
   $stream=[IO.File]::OpenRead($file)
@@ -79,7 +112,11 @@ try {
   if((Split-Path -Leaf $JobFile) -cne ('install-'+$job.id+'.json') -or
      (Split-Path -Parent $JobFile) -ine $job.storage){throw 'Wrong installer job path'}
   if($job.payload -ine (Join-Path $job.storage ('update-'+$job.sha256+'.exe'))){throw 'Wrong payload path'}
-  if($job.stage -ine (Join-Path (Split-Path -Parent $job.target) ('.frame-builder-update-'+$job.id))){throw 'Wrong stage path'}
+  $stageName='.frame-builder-update-'+$job.id
+  $perUserStage=Join-Path $job.storage $stageName
+  $volumeStage=Join-Path (Volume-Root $job.stage) $stageName
+  if($job.stage -ine $perUserStage -and $job.stage -ine $volumeStage){throw 'Wrong stage path'}
+  if((Volume-Id $job.stage) -ine (Volume-Id $job.target)){throw 'Staging must be on the target volume'}
   if([IO.Path]::GetExtension($job.target) -ine '.exe'){throw 'Target must be an executable'}
   if($job.version -notmatch '^\d+\.\d+\.\d+$' -or $job.sha256 -notmatch '^[a-f0-9]{64}$' -or $job.oldSha256 -notmatch '^[a-f0-9]{64}$'){throw 'Invalid version or digest'}
   if(-not (HashOK $job.payload $job.sha256)){throw 'Downloaded update digest mismatch'}
@@ -89,6 +126,8 @@ try {
   if(-not (HashOK $job.target $job.oldSha256)){throw 'Installed executable changed since confirmation'}
   if(Test-Path -LiteralPath $job.stage){throw 'Update staging folder already exists'}
   New-Item -ItemType Directory -Path $job.stage | Out-Null
+  $stageCreated=$true
+  (Get-Item -LiteralPath $job.stage -Force).Attributes = [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::Hidden
   $next=Join-Path $job.stage 'next.exe'; $previous=Join-Path $job.stage 'previous.exe'
   Copy-Item -LiteralPath $job.payload -Destination $next
   if(-not (HashOK $next $job.sha256)){throw 'Target-volume staged digest mismatch'}
@@ -161,12 +200,14 @@ try {
       Start-Process -FilePath $job.target | Out-Null
       Result 'rolled-back' ('Update failed; the previous version was restored. '+$failure)
       Log 'Previous executable restored and restarted'
+      Remove-RestoredStage
     } catch {
       Result 'recovery-required' ('Manual recovery required: '+[string]$_)
       Log ('Automatic rollback failed: '+[string]$_)
     }
   } else {
     Result 'failed' $failure
+    Remove-RestoredStage
     if($parentExited -and (HashOK $job.target $job.oldSha256)){
       Start-Process -FilePath $job.target | Out-Null
     }

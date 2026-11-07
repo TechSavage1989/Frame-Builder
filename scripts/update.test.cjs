@@ -158,11 +158,11 @@ test('main-process scheduler checks unfocused windows and unbinds on close using
   win.emit('closed');const done=count;
   await new Promise(r=>setTimeout(r,60));assert.equal(count,done);
 });
-test('only committed app-owned transactions are cleaned after helper exit',async()=>{
+for (const layout of ['legacy', 'per-user']) test('only committed '+layout+' transactions are cleaned after helper exit',async()=>{
   const {finishInstallJobs,hashFile}=require('../app/update-housekeeping.cjs');
   const folder=fs.mkdtempSync(path.join(os.tmpdir(),'frame-cleanup-'));
   const storage=path.join(folder,'profile','updates'),id='b'.repeat(24);
-  const target=path.join(folder,'My custom launcher.exe'),stage=path.join(folder,'.frame-builder-update-'+id);
+  const target=path.join(folder,'My custom launcher.exe'),stage=path.join(layout==='legacy'?folder:storage,'.frame-builder-update-'+id);
   fs.mkdirSync(storage,{recursive:true});fs.mkdirSync(stage);
   fs.writeFileSync(target,'new');fs.writeFileSync(path.join(stage,'previous.exe'),'old');
   const sha256=await hashFile(target),oldSha256=await hashFile(path.join(stage,'previous.exe'));
@@ -183,4 +183,37 @@ test('only committed app-owned transactions are cleaned after helper exit',async
     assert.equal(fs.readFileSync(path.join(storage,'my-export.stl'),'utf8'),'keep');
     assert.equal(fs.readFileSync(target,'utf8'),'new');
   }finally{fs.rmSync(folder,{recursive:true,force:true})}
+});
+
+test('staging uses per-user storage without creating a Desktop folder',()=>{
+  const {stagePath,isOwnedStage}=require('../app/update-staging.cjs');
+  const folder=fs.mkdtempSync(path.join(os.tmpdir(),'frame-stage-'));
+  const desktop=path.join(folder,'Desktop'),storage=path.join(folder,'profile','updates'),id='c'.repeat(24);
+  fs.mkdirSync(desktop);fs.mkdirSync(storage,{recursive:true});
+  const target=path.join(desktop,'Frame Builder.exe');fs.writeFileSync(target,'existing');
+  try{
+    const stage=stagePath(target,storage,id,desktop);
+    assert.equal(stage,path.join(storage,'.frame-builder-update-'+id));
+    assert.deepEqual(fs.readdirSync(desktop),['Frame Builder.exe']);
+    assert(isOwnedStage({target,storage,id,stage}));
+    assert(!isOwnedStage({target,storage,id,stage:desktop}));
+    assert(!isOwnedStage({target,storage,id,stage:path.join(desktop,'unrelated')}));
+    assert.throws(()=>stagePath(target,storage,'../other'));
+  }finally{fs.rmSync(folder,{recursive:true,force:true})}
+});
+test('cross-volume staging resolves the real target volume through a redirected folder',t=>{
+  const {stagePath,volumeRoot,isOwnedStage}=require('../app/update-staging.cjs');
+  if(process.platform!=='linux'||!fs.existsSync('/dev/shm')||fs.statSync(os.tmpdir()).dev===fs.statSync('/dev/shm').dev){t.skip('Hosted Windows exercises actual C:/D: installs');return}
+  const folder=fs.mkdtempSync(path.join(os.tmpdir(),'frame-stage-'));
+  const other=fs.mkdtempSync('/dev/shm/frame-stage-');
+  try{
+    const redirected=path.join(folder,'Desktop');fs.symlinkSync(other,redirected,'dir');
+    const target=path.join(redirected,'Frame Builder.exe'),id='d'.repeat(24);fs.writeFileSync(target,'existing');
+    const stage=stagePath(target,folder,id);
+    assert.equal(stage,path.join(volumeRoot(other),'.frame-builder-update-'+id));
+    assert.notEqual(path.dirname(stage),redirected);
+    assert.throws(()=>stagePath(target,folder,id,volumeRoot(other)),/outside the Desktop/);
+    assert(isOwnedStage({target,storage:folder,id,stage}));
+    assert.deepEqual(fs.readdirSync(other),['Frame Builder.exe']);
+  }finally{fs.rmSync(folder,{recursive:true,force:true});fs.rmSync(other,{recursive:true,force:true})}
 });

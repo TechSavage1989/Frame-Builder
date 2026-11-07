@@ -94,6 +94,7 @@ Checks run at startup, every five minutes while online, and on a focus return af
 
 - Coming from **3.51.6 or a preview through 3.51.12**? Install the portable ZIP manually first.
 - Preferences and window bounds remain in `%APPDATA%\Canvas Frame Builder`.
+- From 3.51.18, temporary installation files stay in per-user update storage on the same volume. Apps on another volume use a hidden temporary directory at that volume's root. Updating from an older version may still briefly create its old staging folder beside the EXE.
 - The updater replaces "Frame Builder.exe" in its existing folder. It also preserves custom filenames and shortcut targets, and keeps one rollback backup in per-user storage. The versioned GitHub EXE name is only the download name.
 
 ## Troubleshooting

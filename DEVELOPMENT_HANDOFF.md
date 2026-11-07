@@ -1,6 +1,15 @@
 # Frame Builder development handoff
 
-## Current verified state (2026-11-07)
+## Candidate 3.51.18 (2026-11-07)
+
+- Owner reported an unwanted .frame-builder-update-<nonce> folder beside the Desktop executable during the 3.51.17 update.
+- New jobs stage in existing per-user updates storage when it is on the same actual filesystem volume. Other-volume apps stage in a hidden nonce directory at that volume's root, never a Desktop sibling. Replacement and backup remain on the target volume.
+- Filesystem device checks follow redirected folders. The native helper independently validates allowed paths and Windows volume identities. If it cannot prepare the selected location, the existing app stays open; it does not fall back to creating a Desktop folder.
+- Housekeeping supports legacy sibling folders and both new staging locations. On failed replacement, the helper removes owned staging only after verifying restoration of the exact previous EXE. Pre-3.51.18 rollback clients retain per-user diagnostics; the next successful new-app launch cleans them.
+- Added local regression coverage for per-user/legacy cleanup and redirected-volume path selection. Hosted tests now exercise both real Desktop and C:/D: installation/rollback, assert no sibling folder while staging exists, and check hidden attributes and deferred diagnostic cleanup. Windows CI now runs these candidate EXE installation tests before publication, and the release workflow repeats them against the actual hosted bytes. Windows validation and publication are pending.
+- An update initiated by 3.51.17 or earlier still uses its older helper. The first upgrade can therefore show its legacy folder until the new app cleans it. Manual replacement avoids that transition.
+
+## Previous 3.51.17 verification (2026-11-07)
 
 - Latest validated desktop release: 3.51.17, tag v3.51.17, immutable source 14be26a70a17fa57c55cb763981f21a4fbef5803. The public stable feed points to this release.
 - Owner manually installed 3.51.16 and requested another small published update to test the updater. Version 3.51.17 changes only the viewer heading to "3D preview" and the displayed/package version. No updater runtime or geometry changes.
@@ -50,7 +59,7 @@
 - Automatic/manual one-, two- and four-section planning, centered braces and hanger axes.
 - Preview, detachable viewer, STL/STEP/3MF output and Bambu X1C exclusions.
 - Browser source remains "browser/Canvas_Frame_v3_51_6_Builder_and_3D_Viewer.html". CAD source remains under "cad_source".
-- Desktop title, installed-version label and package/update version are 3.51.17. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
+- Desktop title, installed-version label and package/update version are 3.51.18. Existing CAD/export version identifiers remain 3.51.6 where retained by the original source.
 - Fusion Builder 1.4.2 is distinct. Rejected later Borderless fold-flat designs remain excluded.
 
 ## Source, build and testing
@@ -68,7 +77,7 @@ npm run build:windows
 - Legacy packaging helpers under cad_source are retained for baseline provenance. Desktop releases use the top-level npm/Electron build and release workflow; do not ship a legacy CAD ZIP as a desktop update.
 - Runtime: "app/main.cjs", "app/preload.cjs", "app/desktop-ui.js", "app/update-*.cjs", "app/update-install.ps1".
 - "scripts/sync-builder.cjs" generates desktop HTML from the preserved standalone model and updates only desktop-specific integration, title and installed-version label.
-- 22 source checks pass, including corrupted downloads, unsafe URLs/identity/version, retry/backoff, ETag persistence, cleanup ownership and real short-duration scheduler checks.
+- 25 source checks pass, including staging location, redirected-volume selection, legacy cleanup, corrupted downloads, unsafe URLs/identity/version, retry/backoff, ETag persistence, cleanup ownership and real short-duration scheduler checks.
 - Historical timeout and ETag-cache failures have negative controls. The Windows PowerShell missing-hash-command failure was reproduced in run 40178833753; corrected preflight passed in run 40178981099.
 - Native frame/export suite covers all four styles, frame-spring toggle, active export guard, detached viewer, STL/STEP/3MF and isolated renderer.
 - Full production native timing passed for the 3.51.16 release source in run 42344553672: first check 0 ms after schedule binding, native focus return at 120705 ms, and background check at 299998 ms.
@@ -87,7 +96,7 @@ npm run build:windows
 - Per-user storage: Windows Roaming AppData "Canvas Frame Builder", normally "%APPDATA%\Canvas Frame Builder".
 - Saved browser preferences remain in that existing profile. Window bounds are in "window-state.json".
 - Updater files are under "updates": "check-cache.json", "install.log", transaction helper logs, downloaded hash-named EXEs, transaction/helper/health records, and one committed "rollback.exe".
-- Same-volume transaction directory beside the launcher is transient, named ".frame-builder-update-<nonce>". Cleanup requires a healthy application and exited helper.
+- Same-volume transaction directories are transient and named ".frame-builder-update-<nonce>". From 3.51.18 they live in per-user updates storage or, for another-volume apps, at that volume's root with the Hidden attribute. Successful cleanup requires a healthy application and exited helper. Legacy sibling directories are accepted only for cleanup.
 - Automatic checks occur at startup, every five minutes while online, and when the main window returns to focus after at least two minutes. They use single-flight requests, persistent validated cache/ETags, cooldowns and server backoff.
 - Downloads and restart are user-controlled. Active model/export work prevents restart.
 - Validation covers HTTPS repository/asset allowlists, size/SHA-256, PE format, exact product/version and release identity. Update ZIPs are not accepted.
