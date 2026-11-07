@@ -8,10 +8,13 @@ const {validateManifest,REPO,APP_ID}=require('../app/update-core.cjs');
 const {downloadVerified}=require('../app/update-download.cjs');
 const {verifyWindowsIdentity}=require('../app/update-windows.cjs');
 const {hashFile,isRunning}=require('../app/update-housekeeping.cjs');
+const {stagePath}=require('../app/update-staging.cjs');
 if(process.platform!=='win32'||process.env.GITHUB_ACTIONS!=='true')throw Error('Run only in an isolated GitHub Windows runner');
 const current=require('../package.json').version,previous=process.env.PREVIOUS_VERSION;
 if(!/^\d+\.\d+\.\d+$/.test(previous||''))throw Error('Set PREVIOUS_VERSION to an existing release');
 const mode=process.argv[2]||'direct',out=path.resolve('validation/runtime');
+const localCandidate=process.env.FRAME_TEST_LOCAL_CANDIDATE==='true';
+if(localCandidate&&mode!=='direct')throw Error('The actual UI update must use a hosted release');
 fs.mkdirSync(out,{recursive:true});
 const ps=(code,env={})=>execFileSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',"[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);"+code],{encoding:'utf8',windowsHide:true,env:{...process.env,...env},timeout:30000}).trim();
 const roaming=ps("[Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)");
@@ -19,7 +22,7 @@ const storage=path.join(roaming,'Canvas Frame Builder','updates');
 fs.mkdirSync(storage,{recursive:true});
 const testRoot=path.resolve('validation/runtime/install-'+mode);
 fs.mkdirSync(testRoot,{recursive:true});
-const target=path.join(testRoot,mode==='direct'?'User Named Främé.exe':'Frame Builder.exe');
+let target=path.join(testRoot,mode==='direct'?'User Named Främé.exe':'Frame Builder.exe');
 const shortcut=path.join(testRoot,'Frame Builder.lnk');
 const checks=[];
 let diagnosticJob=null,diagnosticOldPid=null;
@@ -62,6 +65,14 @@ async function launch(version,debugPort){
   return {p,receipt:r};
 }
 async function release(version){
+  if(localCandidate&&version===current){
+    const candidate=path.resolve('dist','Frame_Builder_'+current+'_Windows_x64.exe');
+    await verifyWindowsIdentity(candidate,current);
+    const sha256=await hashFile(candidate),file=path.join(storage,'update-'+sha256+'.exe');
+    fs.copyFileSync(candidate,file);
+    assert.equal(await hashFile(file),sha256);
+    return {file,info:{latestVersion:current,asset:{sha256,size:fs.statSync(file).size}}};
+  }
   const tag='v'+version;
   const url='https://github.com/'+REPO+'/releases/download/'+tag+'/update-manifest.json';
   const {data}=await fetchJson(url,null);
@@ -74,12 +85,12 @@ async function waitCleanup(job){
   const owned=['install-'+job.id+'.json','result-'+job.id+'.json','ready-'+job.id+'.json','health-'+job.id+'.txt','helper-'+job.id+'.ps1','helper-'+job.id+'.log','helper-'+job.id+'.out.log','abort-'+job.id];
   await waitFor(()=>!fs.existsSync(job.stage)&&owned.every(n=>!fs.existsSync(path.join(storage,n))),'post-helper cleanup',40000);
 }
-async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false}={}){
+async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false,cleanupJobs=[]}={}){
   const old=await launch(oldVersion);
   const id=crypto.randomBytes(12).toString('hex'),token=crypto.randomBytes(24).toString('hex');
   const job={appId:APP_ID,id,target,storage,payload:newRelease.file,version:current,
     sha256:newRelease.info.asset.sha256,oldSha256:await hashFile(target),healthToken:token,parentPid:old.receipt.pid,
-    stage:path.join(path.dirname(target),'.frame-builder-update-'+id)};
+    stage:stagePath(target,storage,id)};
   const jobFile=path.join(storage,'install-'+id+'.json'),helper=path.join(storage,'helper-'+id+'.ps1');
   fs.writeFileSync(jobFile,JSON.stringify(job));fs.copyFileSync(path.resolve('app/update-install.ps1'),helper);
   let lock;
@@ -100,6 +111,10 @@ async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false
     if(helperExit!==null)throw Error('Installer exited before ready: '+helperExit+' '+helperStderr);
     return fs.existsSync(ready)
   },'installer preflight');
+  assert(fs.existsSync(job.stage));
+  assert(!fs.readdirSync(path.dirname(target)).some(n=>n.startsWith('.frame-builder-update-')),'No updater folder beside the running EXE');
+  assert.equal(ps("[string]((Get-Item -LiteralPath $env:FRAME_TEST_STAGE -Force).Attributes -band [IO.FileAttributes]::Hidden)",{FRAME_TEST_STAGE:job.stage}),'Hidden');
+  checks.push({name:'staging stays off the EXE folder while the installer waits',location:path.dirname(job.stage)===storage?'per-user updates':'hidden target-volume root',filename:path.basename(target),passed:true});
   await closePid(old.receipt.pid,false);
   if(holdLock){
     await delay(2500);assert.equal(await hashFile(target),job.oldSha256);
@@ -118,7 +133,10 @@ async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false
     assert.equal(result.state,'rolled-back',JSON.stringify(result));
     assert.equal(await hashFile(target),job.oldSha256);
     await waitFor(()=>runningFrame(),'previous version restarted',60000);
-    await waitCleanup(job);
+    await waitFor(()=>!fs.existsSync(job.stage),'rollback removes off-Desktop staging',40000);
+    // The restored pre-3.51.18 client cannot clean the new location. Keep its
+    // per-user diagnostic records until the next successful new-app launch.
+    assert(fs.existsSync(jobFile));
     await closePid(runningFrame());
     checks.push({name:'interrupted new window restores and restarts exact previous executable',passed:true});
   }else{
@@ -126,6 +144,7 @@ async function transaction(oldVersion,newRelease,{interrupt=false,holdLock=false
     assert.equal(await hashFile(target),job.sha256);
     await waitCleanup(job);
     assert.equal(await hashFile(path.join(storage,'rollback.exe')),job.oldSha256);
+    for(const earlier of cleanupJobs)await waitCleanup(earlier);
     await closePid(healthy.pid);
     checks.push({name:'download, digest, target-volume staging, visible relaunch and deferred cleanup',passed:true});
   }
@@ -224,8 +243,21 @@ async function uiTest(oldRelease,newRelease){
     // Download is intentionally cleaned after success. Reacquire and revalidate it.
     const next=await release(current);
     fs.copyFileSync(oldRelease.file,target);
-    await transaction(previous,next,{interrupt:true});
-    checks.push({name:'cross-volume download to target staging',crossVolume:path.parse(storage).root.toLowerCase()!==path.parse(target).root.toLowerCase(),passed:true});
+    const otherDriveRollback=await transaction(previous,next,{interrupt:true});
+    assert.notEqual(fs.statSync(storage).dev,fs.statSync(path.dirname(target)).dev);
+    checks.push({name:'cross-volume download to target staging outside the executable folder',crossVolume:true,passed:true});
+    const desktop=ps("[Environment]::GetFolderPath([Environment+SpecialFolder]::DesktopDirectory)");
+    fs.mkdirSync(desktop,{recursive:true});
+    target=path.join(desktop,'Frame Builder.exe');
+    assert(!fs.existsSync(target),'Do not overwrite an existing Desktop executable');
+    fs.copyFileSync(oldRelease.file,target);
+    assert.equal(fs.statSync(storage).dev,fs.statSync(desktop).dev);
+    const desktopRollback=await transaction(previous,next,{interrupt:true});
+    const desktopUpdate=await transaction(previous,await release(current),{cleanupJobs:[otherDriveRollback,desktopRollback]});
+    assert.equal(path.dirname(desktopUpdate.stage),storage);
+    assert(!fs.readdirSync(desktop).some(n=>n.startsWith('.frame-builder-update-')));
+    fs.rmSync(target);
+    checks.push({name:'actual Desktop installation and rollback keep staging in per-user storage; new app cleans prior diagnostic records',passed:true});
   }else if(mode==='ui'){
     const checker=new UpdateCheck({installed:previous});
     const deadline=Date.now()+5*60000;
@@ -242,7 +274,7 @@ async function uiTest(oldRelease,newRelease){
     await uiTest(oldRelease,newRelease);
   }else throw Error('Unknown verification mode');
   assert(!fs.readdirSync(testRoot).some(n=>n.startsWith('.frame-builder-update-')));
-  fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,platform:process.platform,mode,checks,passed:true},null,2));
+  fs.writeFileSync(path.join(out,'hosted-update-'+mode+'.json'),JSON.stringify({version:current,previous,platform:process.platform,mode,payloadSource:localCandidate?'local Windows candidate':'immutable hosted release',checks,passed:true},null,2));
   console.log(JSON.stringify(checks));
 })().catch(async error=>{
   let diagnostic=null;

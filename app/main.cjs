@@ -9,6 +9,7 @@ const { bindUpdateSchedule } = require('./update-scheduler.cjs');
 const { downloadVerified } = require('./update-download.cjs');
 const { verifyWindowsIdentity } = require('./update-windows.cjs');
 const { finishInstallJobs, hashFile, isRunning } = require('./update-housekeeping.cjs');
+const { stagePath } = require('./update-staging.cjs');
 const { safeFilename, fileFilters, windowPreferences } = require('./desktop-policy.cjs');
 const { APP_ID, releaseUrl } = require('./update-core.cjs');
 const preload = path.join(__dirname, 'preload.cjs');
@@ -96,7 +97,7 @@ async function installUpdate() {
       job = { appId: APP_ID, id, target, storage: folder, payload: verifiedUpdate.file,
         version: verifiedUpdate.version, sha256: verifiedUpdate.asset.sha256,
         oldSha256: await hashFile(target), healthToken: crypto.randomBytes(24).toString('hex'),
-        parentPid: process.pid, stage: path.join(path.dirname(target), '.frame-builder-update-' + id) };
+        parentPid: process.pid, stage: stagePath(target, folder, id, app.getPath('desktop')) };
       const jobFile = path.join(folder, 'install-' + id + '.json');
       const helper = path.join(folder, 'helper-' + id + '.ps1');
       const log = path.join(folder, 'install.log');

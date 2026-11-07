@@ -45,3 +45,10 @@ Where this file's project-specific rules differ from the shared standard, this f
 - Actual hosted update UI tests use the exact standard filename "Frame Builder.exe". Direct native tests retain accented custom-name coverage.
 - Exact-source Windows CI 42349347109 and fresh 3.51.16-to-3.51.17 release verification 42349348335 passed. See validation/RELEASE_VERIFICATION_3.51.17.json and the handoff for immutable source, hashes and limitations.
 - The user-PC failure has not been reproduced. This release enables another test; do not describe its label/version change as an updater runtime fix.
+
+## Pending staging-location fix (3.51.18)
+
+- Do not create new updater staging folders on the Desktop beside the EXE. Prefer existing per-user updates storage on the same actual volume; otherwise use a hidden transient directory at the target volume root. Preserve same-volume replacement and backup.
+- Retain cleanup compatibility with older sibling-folder jobs. Never remove active or unverified recovery data. A restored old client may retain private diagnostics until the next successful new-app launch; staging itself must be removed after verified restoration.
+- New staging behavior applies only after 3.51.18 is installed. Do not promise that an update initiated by an older version will use the new helper.
+- Require real Windows Desktop and separate-volume install/rollback evidence, plus the normal previous-to-new UI update, before calling the release ready.

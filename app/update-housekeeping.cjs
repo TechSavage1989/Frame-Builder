@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { isOwnedStage } = require('./update-staging.cjs');
 async function hashFile(file) {
   const hash = crypto.createHash('sha256');
   for await (const piece of fs.createReadStream(file)) hash.update(piece);
@@ -25,8 +26,8 @@ async function finishInstallJobs(storage) {
       if (!fs.existsSync(statusFile)) continue;
       const result = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
       if (result.id !== token || isRunning(result.helperPid)) continue;
-      const stage = path.join(path.dirname(job.target), '.frame-builder-update-' + token);
-      if (path.resolve(job.stage) !== path.resolve(stage)) continue;
+      if (!isOwnedStage(job)) continue;
+      const stage = job.stage;
       if (result.state === 'success') {
         if (await hashFile(job.target) !== job.sha256) continue;
         const prior = path.join(stage, 'previous.exe');
@@ -40,8 +41,15 @@ async function finishInstallJobs(storage) {
         // Only the health-confirmed executable is eligible for cleanup.
         message = { state: 'installed', version: job.version };
       } else if (result.state === 'rolled-back' || result.state === 'failed') {
-        if (await hashFile(job.target) !== job.oldSha256) continue;
-        message = { state: 'install-error', message: result.message || 'The update failed. The previous version was restored.' };
+        const installedHash = await hashFile(job.target);
+        if (installedHash === job.oldSha256) {
+          message = { state: 'install-error', message: result.message || 'The update failed. The previous version was restored.' };
+        } else if (installedHash !== job.sha256 || fs.existsSync(stage)) {
+          continue;
+        }
+        // A later retry may have installed the known new payload. If the old
+        // helper already removed its staging, only its private diagnostics
+        // remain; do not report that superseded failure or retain it forever.
       } else continue; // Preserve failed transactions requiring manual recovery.
       fs.rmSync(stage, { recursive: true, force: true });
       const payload = path.join(storage, 'update-' + job.sha256 + '.exe');
