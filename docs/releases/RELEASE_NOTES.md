@@ -4,7 +4,7 @@ Keeps updater staging off the Desktop.
 
 - Stages updates in the existing per-user update storage when it shares the application's volume, instead of creating a folder beside Frame Builder.exe.
 - For an application on another volume, uses a hidden temporary directory at that volume's root and preserves same-volume replacement and rollback.
-- Cleans up legacy staging folders after a verified successful update. Failed replacement staging is removed once the exact previous EXE is restored; diagnostic records remain in app storage until the new app can finish housekeeping.
+- Cleans up legacy staging folders after a verified successful update. Failed replacement staging is removed once the exact previous EXE is restored; diagnostic records remain in app storage until the new app can finish housekeeping after a retry.
 
 The installed filename remains Frame Builder.exe. Saved settings, shortcuts, all four frame styles and exports are preserved.
 

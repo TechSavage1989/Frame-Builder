@@ -41,8 +41,15 @@ async function finishInstallJobs(storage) {
         // Only the health-confirmed executable is eligible for cleanup.
         message = { state: 'installed', version: job.version };
       } else if (result.state === 'rolled-back' || result.state === 'failed') {
-        if (await hashFile(job.target) !== job.oldSha256) continue;
-        message = { state: 'install-error', message: result.message || 'The update failed. The previous version was restored.' };
+        const installedHash = await hashFile(job.target);
+        if (installedHash === job.oldSha256) {
+          message = { state: 'install-error', message: result.message || 'The update failed. The previous version was restored.' };
+        } else if (installedHash !== job.sha256 || fs.existsSync(stage)) {
+          continue;
+        }
+        // A later retry may have installed the known new payload. If the old
+        // helper already removed its staging, only its private diagnostics
+        // remain; do not report that superseded failure or retain it forever.
       } else continue; // Preserve failed transactions requiring manual recovery.
       fs.rmSync(stage, { recursive: true, force: true });
       const payload = path.join(storage, 'update-' + job.sha256 + '.exe');

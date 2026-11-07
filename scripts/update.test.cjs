@@ -217,3 +217,26 @@ test('cross-volume staging resolves the real target volume through a redirected 
     assert.deepEqual(fs.readdirSync(other),['Frame Builder.exe']);
   }finally{fs.rmSync(folder,{recursive:true,force:true});fs.rmSync(other,{recursive:true,force:true})}
 });
+
+test('successful retry clears superseded failure records only after staging is gone',async()=>{
+  const {finishInstallJobs,hashFile}=require('../app/update-housekeeping.cjs');
+  const folder=fs.mkdtempSync(path.join(os.tmpdir(),'frame-retry-cleanup-'));
+  const storage=path.join(folder,'updates'),id='e'.repeat(24),target=path.join(folder,'Frame Builder.exe');
+  const stage=path.join(storage,'.frame-builder-update-'+id);
+  fs.mkdirSync(stage,{recursive:true});
+  fs.writeFileSync(target,'new');fs.writeFileSync(path.join(stage,'previous.exe'),'old');
+  const sha256=await hashFile(target),oldSha256=await hashFile(path.join(stage,'previous.exe'));
+  const jobFile=path.join(storage,'install-'+id+'.json'),resultFile=path.join(storage,'result-'+id+'.json');
+  fs.writeFileSync(jobFile,JSON.stringify({appId:'com.techsavage3d.canvasframe',id,target,storage,stage,sha256,oldSha256,version:'3.51.18'}));
+  fs.writeFileSync(resultFile,JSON.stringify({id,state:'rolled-back',helperPid:-1}));
+  try{
+    assert.equal(await finishInstallJobs(storage),null);assert(fs.existsSync(jobFile));assert(fs.existsSync(stage));
+    fs.rmSync(stage,{recursive:true});
+    fs.writeFileSync(target,'unrecognized replacement');
+    assert.equal(await finishInstallJobs(storage),null);assert(fs.existsSync(jobFile));
+    fs.writeFileSync(target,'new');
+    assert.equal(await finishInstallJobs(storage),null);
+    assert(!fs.existsSync(jobFile));assert(!fs.existsSync(resultFile));
+    assert.equal(fs.readFileSync(target,'utf8'),'new');
+  }finally{fs.rmSync(folder,{recursive:true,force:true})}
+});
