@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "product": "Frame Builder",
+  "appId": "com.techsavage3d.canvasframe",
+  "version": "3.51.18",
+  "tag": "v3.51.18",
+  "releaseSourceCommit": "e6c18fd566ef7c1b506e85c13070c9c1586d136b",
+  "repository": "https://github.com/TechSavage1989/Frame-Builder",
+  "visibility": "public",
+  "feed": "https://api.github.com/repos/TechSavage1989/Frame-Builder/releases/latest",
+  "previousVersion": "3.51.17",
+  "candidateCiRun": 42351911598,
+  "sourceCiRun": 42352810662,
+  "releaseRun": 42352811181,
+  "sourceTestCount": 26,
+  "status": "PASSED",
+  "change": "Keep new updater staging in per-user storage on the same volume, or a hidden target-volume-root directory for other-volume apps, with legacy and verified-retry cleanup",
+  "nativeChecks": [
+    {
+      "name": "visible responsive isolated window",
+      "passed": true
+    },
+    {
+      "name": "native IPC banner reports failed check and Retry-After cooldown",
+      "passed": true
+    },
+    {
+      "name": "original native 3D preview",
+      "triangles": 43184,
+      "passed": true
+    },
+    {
+      "name": "solid native 3D preview",
+      "triangles": 48762,
+      "passed": true
+    },
+    {
+      "name": "light native 3D preview",
+      "triangles": 50768,
+      "passed": true
+    },
+    {
+      "name": "borderless native 3D preview",
+      "triangles": 72358,
+      "passed": true
+    },
+    {
+      "name": "spring option and active-operation guard",
+      "passed": true
+    },
+    {
+      "name": "background preview stays responsive, cancels stale builds and guards exports",
+      "ticks": 76,
+      "passed": true
+    },
+    {
+      "name": "exploded-view input coalesces without rebuilding geometry",
+      "passed": true
+    },
+    {
+      "name": "invalid dimensions retain last valid model and recover cleanly",
+      "passed": true
+    },
+    {
+      "name": "worker fallback preserves exact STL output and recovers",
+      "passed": true
+    },
+    {
+      "name": "detached viewer and return",
+      "passed": true
+    },
+    {
+      "name": ".stl export through native download handler",
+      "bytes": 1123184,
+      "passed": true
+    },
+    {
+      "name": ".step export through native download handler",
+      "bytes": 438222,
+      "passed": true
+    },
+    {
+      "name": ".3mf export through native download handler",
+      "bytes": 141749,
+      "passed": true
+    },
+    {
+      "name": "production two-minute focus and five-minute unfocused native timer",
+      "elapsedMilliseconds": [
+        0,
+        120718,
+        300005
+      ],
+      "passed": true
+    }
+  ],
+  "candidateInstallerChecks": [
+    {
+      "name": "Windows PowerShell encoding negative control and UTF-8 correction",
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "hidden target-volume root",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "actual native file lock delays replacement until released",
+      "passed": true
+    },
+    {
+      "name": "download, digest, target-volume staging, visible relaunch and deferred cleanup",
+      "passed": true
+    },
+    {
+      "name": "accented custom executable filename survives installation",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "hidden target-volume root",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "interrupted new window restores and restarts exact previous executable",
+      "passed": true
+    },
+    {
+      "name": "cross-volume download to target staging outside the executable folder",
+      "crossVolume": true,
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "per-user updates",
+      "filename": "Frame Builder.exe",
+      "passed": true
+    },
+    {
+      "name": "interrupted new window restores and restarts exact previous executable",
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "per-user updates",
+      "filename": "Frame Builder.exe",
+      "passed": true
+    },
+    {
+      "name": "download, digest, target-volume staging, visible relaunch and deferred cleanup",
+      "passed": true
+    },
+    {
+      "name": "actual Desktop installation and rollback keep staging in per-user storage; new app cleans prior diagnostic records",
+      "passed": true
+    }
+  ],
+  "hostedInstallerChecks": [
+    {
+      "name": "Windows PowerShell encoding negative control and UTF-8 correction",
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "hidden target-volume root",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "actual native file lock delays replacement until released",
+      "passed": true
+    },
+    {
+      "name": "download, digest, target-volume staging, visible relaunch and deferred cleanup",
+      "passed": true
+    },
+    {
+      "name": "accented custom executable filename survives installation",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "hidden target-volume root",
+      "filename": "User Named Främé.exe",
+      "passed": true
+    },
+    {
+      "name": "interrupted new window restores and restarts exact previous executable",
+      "passed": true
+    },
+    {
+      "name": "cross-volume download to target staging outside the executable folder",
+      "crossVolume": true,
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "per-user updates",
+      "filename": "Frame Builder.exe",
+      "passed": true
+    },
+    {
+      "name": "interrupted new window restores and restarts exact previous executable",
+      "passed": true
+    },
+    {
+      "name": "staging stays off the EXE folder while the installer waits",
+      "location": "per-user updates",
+      "filename": "Frame Builder.exe",
+      "passed": true
+    },
+    {
+      "name": "download, digest, target-volume staging, visible relaunch and deferred cleanup",
+      "passed": true
+    },
+    {
+      "name": "actual Desktop installation and rollback keep staging in per-user storage; new app cleans prior diagnostic records",
+      "passed": true
+    }
+  ],
+  "uiChecks": [
+    {
+      "name": "previous portable app discovers actual stable release from configured feed",
+      "passed": true
+    },
+    {
+      "name": "actual install control refuses to restart during active export",
+      "passed": true
+    },
+    {
+      "name": "real previous-to-new UI installation preserves settings, window size, custom filename and shortcut target",
+      "passed": true
+    }
+  ],
+  "newHelperDirectlyTestedOnDesktop": true,
+  "desktopInstalledFilename": "Frame Builder.exe",
+  "uiInstalledFilename": "Frame Builder.exe",
+  "uiTransitionUsesPreviousHelper": true,
+  "uiDownloadForcedFresh": true,
+  "helperLogsAndMarkersCleanupChecked": true,
+  "stagingChecks": {
+    "sameVolume": "existing per-user updates storage",
+    "otherVolume": "hidden target-volume root",
+    "noSiblingDirectoryVerifiedWhileHelperWaited": true,
+    "hiddenAttributeVerified": true,
+    "failedLaunchRestoresExactOldExecutable": true,
+    "stagingRemovedAfterVerifiedRollback": true,
+    "successfulRetryCleansPriorPrivateDiagnostics": true,
+    "legacySiblingJobsRemainSupportedForCleanup": true
+  },
+  "cadBaseline": {
+    "version": "3.51.6",
+    "geometryAndExportsUnchangedFrom": "3.51.17"
+  },
+  "assets": [
+    {
+      "name": "Frame_Builder_3.51.18_Windows_x64.exe",
+      "bytes": 100235731,
+      "sha256": "9fb5ad71eb2e4eabe00a9e1d946800cd630ce8a6076005d0f2635c1d285a13bf",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.18/Frame_Builder_3.51.18_Windows_x64.exe"
+    },
+    {
+      "name": "Frame_Builder_3.51.18_Windows_x64.zip",
+      "bytes": 100244213,
+      "sha256": "e9bb45627f4609959ad95308a789b2560698924a5f73431e711c4b52fb8ac888",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.18/Frame_Builder_3.51.18_Windows_x64.zip"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 298,
+      "sha256": "cb6d18541d7120ba15c096a5d16ab78cf31e20654f7d96bab91146b2ca95877a",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.18/SHA256SUMS.txt"
+    },
+    {
+      "name": "update-manifest.json",
+      "bytes": 1064,
+      "sha256": "cf2593424983833bdf1e53fa3c5da94d062a6144d2054ef8ae67b8e94fe39de6",
+      "downloadUrl": "https://github.com/TechSavage1989/Frame-Builder/releases/download/v3.51.18/update-manifest.json"
+    }
+  ],
+  "environment": {
+    "target": "Windows x64 portable",
+    "hostedRunner": "Microsoft Windows Server 2025",
+    "runnerImage": "windows-2025-vs2026",
+    "runnerImageVersion": "20261103.298.1"
+  },
+  "earlierCandidateFailure": {
+    "run": 42351722358,
+    "message": "Windows identity/version verification failed before the install test",
+    "rootCause": "Not established; did not recur in the final candidate, exact-source CI or hosted release validation",
+    "verificationGuardUnchanged": true
+  },
+  "limitations": [
+    "An update initiated by an older client still uses that client's sibling staging folder for the first upgrade; manual replacement avoids that transition",
+    "The user's own PC has not been tested by this session",
+    "Other-volume staging requires write permission at the target volume root; failed preparation keeps the existing app open",
+    "Unsigned; hashes are not publisher-signature verification",
+    "No new physical print tests; network-share and removable/exFAT installs were not validated",
+    "Remote branch deletion is unavailable through the connected tools"
+  ],
+  "verifiedAt": "2026-11-07T08:08:22.612Z"
+}
